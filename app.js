@@ -77,7 +77,7 @@ function loopBack(){
       since=data[0].id
     }else{
       since+=data.length
-      if(data.length>1||data[0].type!='StateChanged'){
+      if(data.length>1|| !/StateChanged|Ping/.test(data[0].type)) {
         log('*** data is',typeof data, data, '\n\n') 
       }
       for (var i = 0, len = data.length; i < len; i++) {
@@ -110,6 +110,8 @@ loopBack()
 function printPDF(file) {
   var cmd = util.format( '"%s" -silent -print-to "%s" "%s"', PDFReaderPath, printerName, file ) 
   log(cmd)
+  exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
+  return
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)
     if(err) return log('print error', err)
