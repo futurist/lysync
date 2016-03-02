@@ -1,0 +1,1 @@
+syncthing -home=config
