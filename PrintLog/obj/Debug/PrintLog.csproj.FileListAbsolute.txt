@@ -1,0 +1,8 @@
+f:\上传\syncthing\app\PrintLog\bin\Debug\PrintLog.exe
+f:\上传\syncthing\app\PrintLog\bin\Debug\PrintLog.pdb
+f:\上传\syncthing\app\PrintLog\obj\Debug\ResolveAssemblyReference.cache
+f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.Form1.resources
+f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.Properties.Resources.resources
+f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.csproj.GenerateResource.Cache
+f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.exe
+f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.pdb

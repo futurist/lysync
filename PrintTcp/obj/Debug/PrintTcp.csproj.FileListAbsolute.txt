@@ -1,0 +1,5 @@
+f:\上传\syncthing\app\PrintTcp\bin\Debug\PrintTcp.exe
+f:\上传\syncthing\app\PrintTcp\bin\Debug\PrintTcp.pdb
+f:\上传\syncthing\app\PrintTcp\obj\Debug\ResolveAssemblyReference.cache
+f:\上传\syncthing\app\PrintTcp\obj\Debug\PrintTcp.exe
+f:\上传\syncthing\app\PrintTcp\obj\Debug\PrintTcp.pdb
