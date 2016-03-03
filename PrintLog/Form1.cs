@@ -29,23 +29,45 @@ namespace PrintLog
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            timer1_Tick(null, null);
+            //timer1_Tick(new object(), new EventArgs());
 
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            DirectoryInfo d = new DirectoryInfo(path);
-            var logfile =  d.Parent.Parent.Parent.FullName + "\\PrintLog.txt";
-            if(arguments.Length>1) logfile = arguments[1];
+            var logFolder = "";
+            var logfile0 = "";
+            var logfile1 = "";
             try
             {
-                string text = System.IO.File.ReadAllText(logfile);
-                textBox1.Text = text;
+                DirectoryInfo d = new DirectoryInfo(path);
+                
+                if (arguments.Length > 1) logFolder = arguments[1];
+                else logFolder = d.Parent.Parent.Parent.FullName;
+
+                logfile0 = logFolder + "\\PrintLog0.txt";
+                logfile1 = logFolder + "\\PrintLog1.txt";
             }
             catch (Exception err) {
                 textBox1.Text = err.Message;
             }
+            try
+            {
+                textBox1.Text = System.IO.File.ReadAllText(logfile0);
+            }
+            catch (Exception err) {
+                textBox1.Text = err.Message;
+            }
+
+            try
+            {
+                textBox2.Text = System.IO.File.ReadAllText(logfile1);
+            }
+            catch (Exception err)
+            {
+                textBox2.Text = err.Message;
+            }
+
         }
     }
 }

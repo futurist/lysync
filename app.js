@@ -1,21 +1,32 @@
 var http = require('http')
-var url = require('url')
+var os = require('os')
 var fs = require('fs')
 var path = require('path')
 var util = require('util')
 var exec = require('child_process').exec
+var spawn = require('child_process').spawn
 var debug = require('debug')
 var request = require('request')
 
-var net=require("net") 
+var net=require("net")
+var mkdirp=require("mkdirp")
 
 
 var CONFIG = require('./config.json')
 var CLIENT = CONFIG.client||0
 console.log('client: ', CLIENT)
 var filesFolder = ['E:\\公司共享资料_误删', 'D:\\传仓库资料_勿删'][CLIENT]
+var jobFolder = filesFolder+'\\打印任务'
+var jobLogFile = jobFolder+'\\PrintLog'+CLIENT+'.txt'
 var printerName = ['\\\\pcdyj\\TOSHIBA e-STUDIO181', '\\\\pc03\\TOSHIBA e-STUDIO2507Series PCL6'][CLIENT]
 var PDFReaderPath = "c:\\Program Files\\SumatraPDF\\SumatraPDF.exe"
+
+mkdirp(jobFolder)
+
+var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ console.log(err) })
+var PrintLogCmd = path.join(__dirname, 'PrintLog.exe') + ' "'+jobFolder+'"'
+var PrintLog = exec(PrintLogCmd, {cwd:__dirname}, function(err){ console.log(err) })
+console.log(PrintLogCmd)
 
 function log_old(str) {
   if(!CONFIG.debug) return
@@ -110,7 +121,9 @@ loopBack()
 function printPDF(file) {
   var cmd = util.format( '"%s" -silent -print-to "%s" "%s"', PDFReaderPath, printerName, file ) 
   log(cmd)
-  exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
+  fs.appendFile(jobLogFile, ((new Date).toString().split('GMT').shift())+path.basename(file)+os.EOL, function (err) {})
+  // exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
+  request.get('http://127.0.0.1:12300', {timeout:100}, function(err){ console.log(err) })
   return
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)

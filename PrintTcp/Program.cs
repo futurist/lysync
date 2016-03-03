@@ -12,6 +12,16 @@ namespace PrintTcp
     {
         static void Main(string[] args)
         {
+            // Make only one instance
+            // http://stackoverflow.com/questions/6486195/ensuring-only-one-application-instance
+            bool result;
+            var mutex = new System.Threading.Mutex(true, "lysyncPrintTcp", out result);
+            if (!result)
+            {
+                return;
+            }
+            GC.KeepAlive(mutex);
+
             createTCP();
         }
 
@@ -21,7 +31,7 @@ namespace PrintTcp
             try
             {
                 // Set the TcpListener on port 13000.
-                Int32 port = 8080;
+                Int32 port = 12300;
                 IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
                 // TcpListener server = new TcpListener(port);

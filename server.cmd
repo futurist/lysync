@@ -1,2 +1,2 @@
 set DEBUG=*
-node app/app.js
+supervisor app.js
