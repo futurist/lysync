@@ -1,5 +1,6 @@
 var http = require('http')
 var os = require('os')
+var url = require('url')
 var fs = require('fs')
 var path = require('path')
 var util = require('util')
@@ -7,14 +8,18 @@ var exec = require('child_process').exec
 var spawn = require('child_process').spawn
 var debug = require('debug')
 var request = require('request')
+var xml2js = require('xml2js')
+var parser = new xml2js.Parser()
 
 var net=require("net")
 var mkdirp=require("mkdirp")
 
 
+var APIKEY = ''
 var CONFIG = require('./config.json')
 var CLIENT = CONFIG.client||0
 console.log('client: ', CLIENT)
+var syncthingFolder = path.resolve(__dirname, '..')
 var filesFolder = ['E:\\公司共享资料_误删', 'D:\\传仓库资料_勿删'][CLIENT]
 var jobFolder = filesFolder+'\\打印任务'
 var jobLogFile = jobFolder+'\\PrintLog'+CLIENT+'.txt'
@@ -22,7 +27,31 @@ var printerName = ['\\\\pcdyj\\TOSHIBA e-STUDIO181', '\\\\pc03\\TOSHIBA e-STUDIO
 var PDFReaderPath = "c:\\Program Files\\SumatraPDF\\SumatraPDF.exe"
 
 mkdirp(jobFolder)
+reloadConfig()
 
+function reloadConfig(){
+    fs.readFile( syncthingFolder + '/config/config.xml', function(err, data) {
+        parser.parseString(data, function (err, result) {
+            // console.dir( JSON.stringify(result) );
+            APIKEY = result.configuration.gui[0].apikey[0]
+            console.log(APIKEY)
+        })
+    })
+}
+
+function closeSyncThing(cb){
+  request(
+    {
+      method: 'POST',
+      uri: 'http://127.0.0.1:8384/rest/system/shutdown', 
+      headers:{
+        'X-API-Key': APIKEY
+      }
+    }, cb
+  )
+}
+
+var SyncChild = exec('syncthing.exe -home=config -no-browser', {cwd:syncthingFolder}, function(err){ console.log(err) })
 var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ console.log(err) })
 var PrintLogCmd = path.join(__dirname, 'PrintLog.exe') + ' "'+jobFolder+'"'
 var PrintLog = exec(PrintLogCmd, {cwd:__dirname}, function(err){ console.log(err) })
@@ -34,33 +63,19 @@ function log_old(str) {
 }
 var log = debug('app:lysync')
 
-net.createServer(function(socket){
-  socket.on("error",function(err){
-    if(err){
-      log(err)
-    }
-  })
-  socket.on("data", function(data){
-    if(!data)return
-    data = data.toString()
-    log(data)
-
-    if(data==="exit"){
-      socket.write("exit")
-      return
-    }
-    
-    try{
-      data = JSON.parse(data)
-    }catch(e){
-      log('bad json')
-    }
-    
-    
-
-  })
-})
-.listen(81, function(){log('socket ready')})
+http.createServer(function (req, res) {
+  var obj = url.parse(req.url, true)
+  var query = obj.query
+  if(query.action=='shutdown'){
+    closeSyncThing(function(err, retRes, body){
+      res.writeHead(retRes.statusCode, retRes.headers)
+      res.end(body)
+    })
+    return
+  }
+  res.writeHead(200, {'Content-Type': 'text/plain'})
+  res.end(req.url)
+}).listen(12301)
 
 var since = 0
 function loopBack(){
@@ -99,6 +114,7 @@ function loopBack(){
         //   item: 'pdf\\复件 app.txt',
         //   type: 'file' }}
         var item = data[i]
+        if(item.type=='ConfigSaved') reloadConfig()
         if(item.type=='ItemFinished' && 
            item.data.action=='update' && 
            item.data.type=='file' &&

@@ -69,7 +69,8 @@ namespace PrintTcp
                         Console.WriteLine("Received: {0}", data);
 
                         // Process the data sent by the client.
-                        data = data.ToUpper();
+                        //data = data.ToUpper();
+                        data = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
 
                         byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
 
@@ -105,10 +106,10 @@ namespace PrintTcp
         {
             string path = Directory.GetCurrentDirectory();
             DirectoryInfo d = new DirectoryInfo(path);
-            // Console.WriteLine("...." + d.Parent.Parent.Parent.FullName);
+            //Console.WriteLine("...." + d.Parent.Parent.Parent.FullName);
+            Console.WriteLine(d.FullName + "\\success.wav");
 
-
-            using (SoundPlayer player = new SoundPlayer( d.Parent.Parent.Parent.FullName + "\\success.wav"))
+            using (SoundPlayer player = new SoundPlayer( "success.wav"))
             {
                 try
                 {

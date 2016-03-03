@@ -20,7 +20,9 @@ namespace PrintLog
     {
         String[] arguments = Environment.GetCommandLineArgs();
         string path = Directory.GetCurrentDirectory();
-        
+        string logFolder = "";
+        string logfile0 = "";
+        string logfile1 = "";
 
         public Form1()
         {
@@ -29,15 +31,6 @@ namespace PrintLog
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            //timer1_Tick(new object(), new EventArgs());
-
-        }
-
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            var logFolder = "";
-            var logfile0 = "";
-            var logfile1 = "";
             try
             {
                 DirectoryInfo d = new DirectoryInfo(path);
@@ -48,14 +41,29 @@ namespace PrintLog
                 logfile0 = logFolder + "\\PrintLog0.txt";
                 logfile1 = logFolder + "\\PrintLog1.txt";
             }
-            catch (Exception err) {
+            catch (Exception err)
+            {
                 textBox1.Text = err.Message;
             }
+
+            //timer1_Tick(new object(), new EventArgs());
+
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            updateText();
+
+        }
+
+        public void updateText()
+        {
             try
             {
                 textBox1.Text = System.IO.File.ReadAllText(logfile0);
             }
-            catch (Exception err) {
+            catch (Exception err)
+            {
                 textBox1.Text = err.Message;
             }
 
@@ -67,7 +75,13 @@ namespace PrintLog
             {
                 textBox2.Text = err.Message;
             }
-
+            textBox3.Text = DateTime.Now.ToString();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            updateText();
+        }
+
     }
 }
