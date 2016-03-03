@@ -83,5 +83,6 @@ namespace PrintLog
             updateText();
         }
 
+
     }
 }

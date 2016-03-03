@@ -1,2 +1,2 @@
 set DEBUG=*
-supervisor app.js
+supervisor -i . app.js

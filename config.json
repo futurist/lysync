@@ -1,4 +1,8 @@
 {
-    "client": 1,
-    "public_ip": ""
+    "client": 0,
+    "filesFolder": "E:\\公司共享资料_误删",
+    "printerName": "\\\\pcdyj\\TOSHIBA e-STUDIO181",
+    "readerPath": "c:\\Program Files\\SumatraPDF\\SumatraPDF.exe",
+    "printCommand": "\"%s\" -silent -print-to \"%s\" \"%s\"",
+    "publicIP": ""
 }
