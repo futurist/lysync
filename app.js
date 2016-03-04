@@ -6,6 +6,7 @@ var path = require('path')
 var util = require('util')
 var exec = require('child_process').exec
 var spawn = require('child_process').spawn
+var moment = require('moment')
 var debug = require('debug')
 var request = require('request')
 var xml2js = require('xml2js')
@@ -27,6 +28,7 @@ var PDFReaderPath = CONFIG.readerPath || "c:\\Program Files\\SumatraPDF\\Sumatra
 var syncthingFolder = path.resolve(__dirname, '..')
 var syncthingConfig = syncthingFolder + '/config/config.xml'
 var SyncChild = null
+var SyncConfig = {}
 
 mkdirp(jobFolder)
 reloadConfig()
@@ -35,6 +37,8 @@ function reloadConfig(){
     fs.readFile( syncthingConfig, function(err, data) {
         var parser = new xml2js.Parser()
         parser.parseString(data, function (err, result) {
+            if(err) return console.log( 'error parsing syncthing config.xml' )
+            SyncConfig = result
             // console.dir( JSON.stringify(result) );
             APIKEY = result.configuration.gui[0].apikey[0]
             console.log(APIKEY)
@@ -55,15 +59,7 @@ function reloadConfig(){
 }
 
 function closeSyncThing(cb){
-  request(
-    {
-      method: 'POST',
-      uri: 'http://127.0.0.1:8384/rest/system/shutdown', 
-      headers:{
-        'X-API-Key': APIKEY
-      }
-    }, cb
-  )
+  request({ method: 'POST', uri: 'http://127.0.0.1:8384/rest/system/shutdown',  headers:{ 'X-API-Key': APIKEY } }, cb)
 }
 
 var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ console.log(err) })
@@ -151,13 +147,16 @@ loopBack()
 function printPDF(file) {
   var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" "%s"', PDFReaderPath, printerName, file ) 
   log(cmd)
-  fs.appendFile(jobLogFile, ((new Date).toString().split('GMT').shift())+path.basename(file)+os.EOL, function (err) {})
   // exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
-  request.get('http://127.0.0.1:12300', {timeout:100}, function(err){ console.log(err) })
   // return
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)
-    if(err) return log('print error', err)
+    if(err){
+        printLog(file, '失败')
+        return log('print error', file, err)
+    }
+    printLog(file, '成功')
+    request.get('http://127.0.0.1:12300', {timeout:100}, function(err){ console.log(err) })
     setTimeout(function(){
       fs.unlink(file, function (err) {
         if(err) log('cannot delete file ', file)
@@ -165,3 +164,45 @@ function printPDF(file) {
     }, 3000)
   })
 }
+
+function printLog(file, status){
+    // tutpoint: moment.format('[plain YYYY]') will output plain string
+    fs.appendFile(jobLogFile, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+path.basename(file).replace('print_job_','')+ ' : ' + status +os.EOL, 
+        function (err) {})
+}
+
+var checkInterval = setInterval(checkStatus, 5000)
+
+function checkStatus(){
+  request.get('http://127.0.0.1:8384/rest/system/error', function(err, res, data){
+    if (err) {
+      return log('error connect server', err)
+    }
+    try{
+      data=JSON.parse(data)
+    }catch(e){
+      return log('error parse data', data)
+    }
+    // {"errors":[{"when":"2016-03-04T15:06:10.74125+08:00","message":"Stopping folder \"files\" - folder marker missing"}]}
+    // {"errors":null}
+    if(!data.errors) return
+    var msg = data.errors.shift().message.match( /folder "([^"]*)"/ )
+    var folder = msg && msg.pop()
+    if( folder ){
+      var app = SyncConfig.configuration.folder.find(function(v){ return v.$.id==folder })
+      mkdirp( app.$.path )
+      fs.writeFileSync(app.$.path + '\\.stfolder', '')
+      exec('attrib +a +s +h "'+ app.$.path + '\\.stfolder"')
+      clearAllErrors()
+    }
+  })
+}
+
+function clearAllErrors(){
+  // POST /rest/system/error/clear
+  request(
+    {method: 'POST', uri: 'http://127.0.0.1:8384/rest/system/error/clear',  headers:{ 'X-API-Key': APIKEY }}, 
+    function(err, res, body){ console.log('clearAllErrors', body) }
+  )
+}
+
