@@ -149,7 +149,7 @@ loopBack()
 
 
 function printPDF(file) {
-  var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" "%s"', PDFReaderPath, printerName, file ) 
+  var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" -print-settings "fit" "%s"', PDFReaderPath, printerName, file )
   log(cmd)
   // exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
   // return
