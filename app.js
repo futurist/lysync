@@ -24,12 +24,14 @@ var jobFolder = filesFolder+'\\打印任务'
 var jobLogFile = jobFolder+'\\PrintLog'+CLIENT+'.txt'
 var printerName = CONFIG.printerName || ['\\\\pcdyj\\TOSHIBA e-STUDIO181', '\\\\pc03\\TOSHIBA e-STUDIO2507Series PCL6'][CLIENT]
 var PDFReaderPath = CONFIG.readerPath || "c:\\Program Files\\SumatraPDF\\SumatraPDF.exe"
+var backupFolder = CONFIG.backupFolder || "e:\\sync_backup"
 
 var syncthingFolder = path.resolve(__dirname, '..')
 var syncthingConfig = syncthingFolder + '/config/config.xml'
 var SyncChild = null
 var SyncConfig = {}
 
+mkdirp(backupFolder)
 mkdirp(jobFolder)
 reloadConfig()
 
@@ -63,8 +65,8 @@ function closeSyncThing(cb){
 }
 
 var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ console.log(err) })
-var PrintLogCmd = path.join(__dirname, 'PrintLog.exe') + ' "'+jobFolder+'"'
-var PrintLog = exec(PrintLogCmd, {cwd:__dirname}, function(err){ console.log(err) })
+var PrintLogCmd = path.join(__dirname, 'PrintLog.exe') + ' "'+jobFolder+'" ' + CLIENT
+// var PrintLog = exec(PrintLogCmd, {cwd:__dirname}, function(err){ console.log(err) })
 console.log(PrintLogCmd)
 
 function log_old(str) {
@@ -86,6 +88,8 @@ http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'})
   res.end(req.url)
 }).listen(12301)
+
+
 
 var since = 0
 function loopBack(){
@@ -158,9 +162,10 @@ function printPDF(file) {
     printLog(file, '成功')
     request.get('http://127.0.0.1:12300', {timeout:100}, function(err){ console.log(err) })
     setTimeout(function(){
-      fs.unlink(file, function (err) {
-        if(err) log('cannot delete file ', file)
-      })
+//      fs.unlink(file, function (err) {
+//        if(err) log('cannot delete file ', file)
+//      })
+		fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
     }, 3000)
   })
 }

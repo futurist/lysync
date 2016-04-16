@@ -46,7 +46,18 @@ namespace PrintLog
                 textBox1.Text = err.Message;
             }
 
-            //timer1_Tick(new object(), new EventArgs());
+            var selTab = 0;
+            try
+            {
+                if (arguments.Length > 2) selTab = Int32.Parse(arguments[2]);
+            }
+            catch (Exception err)
+            {
+                selTab = 0;
+            }
+            tabControl1.SelectedTab = tabControl1.TabPages[selTab];
+
+            updateText();
 
         }
 

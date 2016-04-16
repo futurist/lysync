@@ -1,7 +1,8 @@
 {
-    "client": 0,
-    "filesFolder": "E:\\公司共享资料_误删",
-    "printerName": "\\\\pcdyj\\TOSHIBA e-STUDIO181",
+    "client": 1,
+    "filesFolder": "D:\\传仓库资料_勿删",
+    "backupFolder": "e:\\sync_backup",
+    "printerName": "\\\\pc03\\TOSHIBA e-STUDIO2507Series PCL6",
     "readerPath": "c:\\Program Files\\SumatraPDF\\SumatraPDF.exe",
     "printCommand": "\"%s\" -silent -print-to \"%s\" \"%s\"",
     "publicIP": ""
