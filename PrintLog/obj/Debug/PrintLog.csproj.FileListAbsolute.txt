@@ -7,3 +7,12 @@ f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.csproj.GenerateResource.Cach
 f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.exe
 f:\上传\syncthing\app\PrintLog\obj\Debug\PrintLog.pdb
 f:\上传\syncthing\app\PrintLog\bin\Debug\PrintLog.exe.config
+D:\crx\lysync\PrintLog\bin\Debug\PrintLog.exe.config
+D:\crx\lysync\PrintLog\obj\Debug\PrintLog.exe
+D:\crx\lysync\PrintLog\obj\Debug\PrintLog.pdb
+D:\crx\lysync\PrintLog\bin\Debug\PrintLog.exe
+D:\crx\lysync\PrintLog\bin\Debug\PrintLog.pdb
+D:\crx\lysync\PrintLog\obj\Debug\ResolveAssemblyReference.cache
+D:\crx\lysync\PrintLog\obj\Debug\PrintLog.Form1.resources
+D:\crx\lysync\PrintLog\obj\Debug\PrintLog.Properties.Resources.resources
+D:\crx\lysync\PrintLog\obj\Debug\PrintLog.csproj.GenerateResource.Cache

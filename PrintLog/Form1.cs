@@ -36,7 +36,7 @@ namespace PrintLog
                 DirectoryInfo d = new DirectoryInfo(path);
                 
                 if (arguments.Length > 1) logFolder = arguments[1];
-                else logFolder = d.Parent.Parent.Parent.FullName;
+                else logFolder = d.FullName;
 
                 logfile0 = logFolder + "\\PrintLog0.txt";
                 logfile1 = logFolder + "\\PrintLog1.txt";
@@ -50,6 +50,7 @@ namespace PrintLog
             try
             {
                 if (arguments.Length > 2) selTab = Int32.Parse(arguments[2]);
+                 
             }
             catch (Exception err)
             {
@@ -71,7 +72,10 @@ namespace PrintLog
         {
             try
             {
-                textBox1.Text = System.IO.File.ReadAllText(logfile0);
+                // textBox1.Text = System.IO.File.ReadAllText(logfile0);
+                string[] myString = System.IO.File.ReadAllLines(logfile0);
+                Array.Reverse(myString);
+                textBox1.Text = String.Join(Environment.NewLine, myString);
             }
             catch (Exception err)
             {
@@ -80,7 +84,11 @@ namespace PrintLog
 
             try
             {
-                textBox2.Text = System.IO.File.ReadAllText(logfile1);
+                //textBox2.Text = System.IO.File.ReadAllText(logfile1);
+                string[] myString = System.IO.File.ReadAllLines(logfile1);
+                Array.Reverse(myString);
+                textBox2.Text = String.Join(Environment.NewLine, myString);
+
             }
             catch (Exception err)
             {

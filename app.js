@@ -22,6 +22,7 @@ console.log('client: ', CLIENT)
 var filesFolder = CONFIG.filesFolder || ['E:\\公司共享资料_误删', 'D:\\传仓库资料_勿删'][CLIENT]
 var jobFolder = filesFolder+'\\打印任务'
 var jobLogFile = jobFolder+'\\PrintLog'+CLIENT+'.txt'
+var jobLogFileLocal = jobFolder+'\\PrintLog'+(1-CLIENT)+'.txt'
 var printerName = CONFIG.printerName || ['\\\\pcdyj\\TOSHIBA e-STUDIO181', '\\\\pc03\\TOSHIBA e-STUDIO2507Series PCL6'][CLIENT]
 var PDFReaderPath = CONFIG.readerPath || "c:\\Program Files\\SumatraPDF\\SumatraPDF.exe"
 var backupFolder = CONFIG.backupFolder || "e:\\sync_backup"
@@ -128,7 +129,17 @@ function loopBack(){
         //   item: 'pdf\\复件 app.txt',
         //   type: 'file' }}
         var item = data[i]
+        // config changed
         if(item.type=='ConfigSaved') reloadConfig()
+
+        // local print
+        if(item.type=='LocalIndexUpdated' && item.data.items){
+          item.data.filenames.forEach(function(v, i){
+            if(v.match(/\.pdf/)) printLog(v, 'LocalIndexUpdated')
+          })
+        }
+
+        // remote print
         if(item.type=='ItemFinished' && 
            item.data.action=='update' && 
            item.data.type=='file' &&
@@ -155,7 +166,7 @@ function printPDF(file) {
   // return
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)
-    if(err){
+    if(err) {
         printLog(file, '失败')
         return log('print error', file, err)
     }
@@ -171,9 +182,21 @@ function printPDF(file) {
 }
 
 function printLog(file, status){
-    // tutpoint: moment.format('[plain YYYY]') will output plain string
-    fs.appendFile(jobLogFile, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+path.basename(file).replace('print_job_','')+ ' : ' + status +os.EOL, 
-        function (err) {})
+  // tutpoint: moment.format('[plain YYYY]') will output plain string
+  var filename = path.basename(file).replace('print_job_','')
+  var content = fs.readFileSync(jobLogFile, 'utf8')
+  var isNew = content.indexOf(filename)<0
+  if(status==='LocalIndexUpdated'){
+    if(!isNew) return
+    jobLogFile = jobLogFileLocal
+    status = isNew ? '未发送' : '打印成功'
+  }
+  if(!isNew){
+    content = content.replace(new RegExp(filename+'.*'), filename+' : '+status)
+    fs.writeFileSync(jobLogFile, content, 'utf8')
+  } else {
+    fs.appendFile(jobLogFile, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+ filename + ' : ' + status +os.EOL, function (err) {})
+  }
 }
 
 var checkInterval = setInterval(checkStatus, 5000)
