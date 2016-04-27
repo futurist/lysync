@@ -167,35 +167,35 @@ function printPDF(file) {
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)
     if(err) {
-        printLog(file, '失败')
-        return log('print error', file, err)
+      printLog(file, '失败', jobLogFile)
+      return log('print error', file, err)
     }
-    printLog(file, '成功')
+    printLog(file, '成功', jobLogFile)
     request.get('http://127.0.0.1:12300', {timeout:100}, function(err){ console.log(err) })
     setTimeout(function(){
-//      fs.unlink(file, function (err) {
-//        if(err) log('cannot delete file ', file)
-//      })
-		fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
+      //      fs.unlink(file, function (err) {
+      //        if(err) log('cannot delete file ', file)
+      //      })
+		  fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
     }, 3000)
   })
 }
 
-function printLog(file, status){
-  // tutpoint: moment.format('[plain YYYY]') will output plain string
-  var filename = path.basename(file).replace('print_job_','')
-  var content = fs.readFileSync(jobLogFile, 'utf8')
+function printLog(file, status, logFileName){
+  logFileName = logFileName || jobLogFileLocal
+  var filename = path.basename(file).replace('print_job_', '')
+  var content = fs.readFileSync(logFileName, 'utf8')
   var isNew = content.indexOf(filename)<0
   if(status==='LocalIndexUpdated'){
     if(!isNew) return
-    jobLogFile = jobLogFileLocal
     status = isNew ? '未发送' : '打印成功'
   }
   if(!isNew){
     content = content.replace(new RegExp(filename+'.*'), filename+' : '+status)
-    fs.writeFileSync(jobLogFile, content, 'utf8')
+    fs.writeFileSync(logFileName, content, 'utf8')
   } else {
-    fs.appendFile(jobLogFile, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+ filename + ' : ' + status +os.EOL, function (err) {})
+    // tutpoint: moment.format('[plain YYYY]') will output plain string
+    fs.appendFile(logFileName, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+ filename + ' : ' + status +os.EOL, function (err) {})
   }
 }
 

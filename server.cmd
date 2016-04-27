@@ -1,7 +1,7 @@
 @rem HIDE CMD WINDOW if you don't want to see cmd
-title 仓库同步程序勿关
+title synck
 @ping /n 2 127.1>nul
-@nircmd.exe win min ititle "仓库同步程序勿关"
+@nircmd.exe win hide title "synck"
 
 
 set DEBUG=*
