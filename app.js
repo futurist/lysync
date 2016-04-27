@@ -177,19 +177,27 @@ function printPDF(file) {
     log('print result',child.pid, err, stdout, stderr)
     if(err) {
       // printLog(file, '失败', jobLogFile)
-      fs.writeFile(file+'.sta', '失败', 'utf8', function(){})
+      fs.writeFile(file+'.sta', '打印失败', 'utf8', function(){})
       return log('print error', file, err)
     }
     // printLog(file, '成功', jobLogFile)
-    fs.writeFile(file+'.sta', '成功', 'utf8', function(){})
+    fs.writeFile(file+'.sta', '打印成功', 'utf8', function(){})
     request.get('http://127.0.0.1:12300', {timeout:100}, function(err){ console.log(err) })
+
+    // use below instead of rename
+    fs.createReadStream(file).pipe(fs.createWriteStream(path.join(backupFolder, path.basename(file))))
+      .on('finish', function(){
+        fs.unlink(file)
+      })
+
     setTimeout(function(){
-      //      fs.unlink(file, function (err) {
-      //        if(err) log('cannot delete file ', file)
-      //      })
+      // fs.unlink(file, function (err) {
+      //   if(err) log('cannot delete file ', file)
+      // })
       log('rename file', file,path.join(backupFolder, path.basename(file)))
-		  fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
-    }, 3000)
+      // below not work when d: to e: : Error: EXDEV: cross-device link not permitted, rename, use pipe above
+		  // fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
+    }, 1000)
   })
 }
 
