@@ -135,7 +135,16 @@ function loopBack(){
         // local print
         if(item.type=='LocalIndexUpdated' && item.data.items){
           item.data.filenames.forEach(function(v, i){
-            if(v.match(/\.pdf/)) printLog(v, 'LocalIndexUpdated')
+            if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
+            else if(v.match(/\.sta$/)){
+              var fullPath =  path.join(filesFolder, v)
+              var fileObj = path.parse(v)
+              fs.readFile(fullPath, 'utf8', function(e, data){
+                if(e) return log(e)
+                printLog(v, data)
+                setTimeout(function(){fs.unlink(fullPath, function(){})}, 1000)
+              })
+            }
           })
         }
 
@@ -167,15 +176,18 @@ function printPDF(file) {
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)
     if(err) {
-      printLog(file, '失败', jobLogFile)
+      // printLog(file, '失败', jobLogFile)
+      fs.writeFile(file+'.sta', '失败', 'utf8', function(){})
       return log('print error', file, err)
     }
-    printLog(file, '成功', jobLogFile)
+    // printLog(file, '成功', jobLogFile)
+    fs.writeFile(file+'.sta', '成功', 'utf8', function(){})
     request.get('http://127.0.0.1:12300', {timeout:100}, function(err){ console.log(err) })
     setTimeout(function(){
       //      fs.unlink(file, function (err) {
       //        if(err) log('cannot delete file ', file)
       //      })
+      log('rename file', file,path.join(backupFolder, path.basename(file)))
 		  fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
     }, 3000)
   })
@@ -183,7 +195,7 @@ function printPDF(file) {
 
 function printLog(file, status, logFileName){
   logFileName = logFileName || jobLogFileLocal
-  var filename = path.basename(file).replace('print_job_', '')
+  var filename = path.basename(file).replace('print_job_', '').replace(/\.sta$/, '')
   var content = fs.readFileSync(logFileName, 'utf8')
   var isNew = content.indexOf(filename)<0
   if(status==='LocalIndexUpdated'){
@@ -192,7 +204,7 @@ function printLog(file, status, logFileName){
   }
   if(!isNew){
     content = content.replace(new RegExp(filename+'.*'), filename+' : '+status)
-    fs.writeFileSync(logFileName, content, 'utf8')
+    fs.writeFile(logFileName, content, 'utf8', function(){})
   } else {
     // tutpoint: moment.format('[plain YYYY]') will output plain string
     fs.appendFile(logFileName, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+ filename + ' : ' + status +os.EOL, function (err) {})
