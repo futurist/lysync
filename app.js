@@ -203,8 +203,8 @@ function printPDF(file) {
 
 function printLog(file, status, logFileName){
   logFileName = logFileName || jobLogFileLocal
-  var filename = path.basename(file).replace('print_job_', '').replace(/\.sta$/, '')
-  var content = fs.readFileSync(logFileName, 'utf8')
+  var content,filename = path.basename(file).replace('print_job_', '').replace(/\.sta$/, '')
+  try { content = fs.readFileSync(logFileName, 'utf8')} catch(e) {content = '' }
   var isNew = content.indexOf(filename)<0
   if(status==='LocalIndexUpdated'){
     if(!isNew) return
