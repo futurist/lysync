@@ -135,16 +135,7 @@ function loopBack(){
         // local print
         if(item.type=='LocalIndexUpdated' && item.data.items){
           item.data.filenames.forEach(function(v, i){
-            if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
-            else if(v.match(/\.sta$/)){
-              var fullPath =  path.join(filesFolder, v)
-              var fileObj = path.parse(v)
-              fs.readFile(fullPath, 'utf8', function(e, data){
-                if(e) return log(e)
-                printLog(v, data)
-                setTimeout(function(){fs.unlink(fullPath, function(){})}, 1000)
-              })
-            }
+            if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated', jobLogFile)
           })
         }
 
@@ -154,10 +145,19 @@ function loopBack(){
            item.data.type=='file' &&
            item.data.error==null  ){
              var fullPath = path.join(filesFolder, item.data.item)
-             var fileObj = path.parse(item.data.item)
+             var fileObj = path.parse(fullPath)
+             var v = fileObj.base
+             log('-----Itemfinished', v, fullPath)
              if(fileObj.base.match(/^print_job_/) && fileObj.ext=='.pdf'){
                printPDF(fullPath)
              }
+             else if(v.match(/\.sta$/)){
+              fs.readFile(fullPath, 'utf8', function(e, data){
+                if(e) return log(e)
+                printLog(v, data)
+                setTimeout(function(){fs.unlink(fullPath, function(){})}, 1000)
+              })
+            }
         }
       }
     }
@@ -203,8 +203,9 @@ function printPDF(file) {
 
 function printLog(file, status, logFileName){
   logFileName = logFileName || jobLogFileLocal
-  var filename = path.basename(file).replace('print_job_', '').replace(/\.sta$/, '')
-  var content = fs.readFileSync(logFileName, 'utf8')
+  var content, filename = path.basename(file).replace('print_job_', '').replace(/\.sta$/, '')
+  try{content = fs.readFileSync(logFileName, 'utf8')}
+  catch(e){content = ''}
   var isNew = content.indexOf(filename)<0
   if(status==='LocalIndexUpdated'){
     if(!isNew) return
