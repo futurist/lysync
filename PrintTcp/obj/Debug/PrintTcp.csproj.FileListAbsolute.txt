@@ -3,3 +3,8 @@ f:\上传\syncthing\app\PrintTcp\bin\Debug\PrintTcp.pdb
 f:\上传\syncthing\app\PrintTcp\obj\Debug\ResolveAssemblyReference.cache
 f:\上传\syncthing\app\PrintTcp\obj\Debug\PrintTcp.exe
 f:\上传\syncthing\app\PrintTcp\obj\Debug\PrintTcp.pdb
+D:\crx\lysync\PrintTcp\obj\Debug\PrintTcp.exe
+D:\crx\lysync\PrintTcp\obj\Debug\PrintTcp.pdb
+D:\crx\lysync\PrintTcp\bin\Debug\PrintTcp.exe
+D:\crx\lysync\PrintTcp\bin\Debug\PrintTcp.pdb
+D:\crx\lysync\PrintTcp\obj\Debug\ResolveAssemblyReference.cache

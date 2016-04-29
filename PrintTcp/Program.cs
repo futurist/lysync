@@ -5,6 +5,8 @@ using System.Net.Sockets;
 using System.Net;
 using System.Media;
 using System.IO;
+using System.Diagnostics;
+using System.Web;
 
 namespace PrintTcp
 {
@@ -35,7 +37,8 @@ namespace PrintTcp
                 IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
                 // TcpListener server = new TcpListener(port);
-                server = new TcpListener(localAddr, port);
+                // server = new TcpListener(localAddr, port);
+                server = new TcpListener(IPAddress.Any, port);
 
                 // Start listening for client requests.
                 server.Start();
@@ -54,7 +57,7 @@ namespace PrintTcp
                     TcpClient client = server.AcceptTcpClient();
                     Console.WriteLine("Connected!");
 
-                    data = null;
+                    data = "";
 
                     // Get a stream object for reading and writing
                     NetworkStream stream = client.GetStream();
@@ -62,11 +65,13 @@ namespace PrintTcp
                     int i;
 
                     // Loop to receive all the data sent by the client.
-                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                    if ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                     {
                         // Translate data bytes to a ASCII string.
                         data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                        Console.WriteLine("Received: {0}", data);
+                        var url = data.Split(' ')[1];
+                        url = HttpUtility.UrlDecode(url).Substring(1);
+                        Console.WriteLine("Received: {0}----{1}", url, data);
 
                         // Process the data sent by the client.
                         //data = data.ToUpper();
@@ -77,7 +82,8 @@ namespace PrintTcp
                         // Send back a response.
                         stream.Write(msg, 0, msg.Length);
                         Console.WriteLine("Sent: {0}", data);
-                        playSound();
+
+                        exeCmd(url);
                     }
 
                     // Shutdown and end connection
@@ -98,14 +104,48 @@ namespace PrintTcp
             }
 
 
-            Console.WriteLine("\nHit enter to continue...");
-            Console.Read();
+            //Console.WriteLine("\nHit enter to continue...");
+            //Console.Read();
         }
+
+        static void exeCmd(string arg)
+        {
+            string path = Directory.GetCurrentDirectory();
+            DirectoryInfo d = new DirectoryInfo(path);
+
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+
+            startInfo.CreateNoWindow = true;
+            startInfo.UseShellExecute = true;
+            startInfo.FileName = "nircmd.exe";
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.WorkingDirectory = d.FullName;
+            startInfo.Arguments = arg;
+
+            Process.Start(startInfo);
+
+            return;
+        }
+
 
         static void playSound()
         {
             string path = Directory.GetCurrentDirectory();
             DirectoryInfo d = new DirectoryInfo(path);
+
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+
+            startInfo.CreateNoWindow = true;
+            startInfo.UseShellExecute = true;
+            startInfo.FileName = "nircmd.exe";
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.WorkingDirectory = d.FullName;
+            startInfo.Arguments = "mediaplay 33000 success.wav";
+
+            Process.Start(startInfo);
+
+            return;
+            
             //Console.WriteLine("...." + d.Parent.Parent.Parent.FullName);
             Console.WriteLine(d.FullName + "\\success.wav");
 
