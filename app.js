@@ -182,7 +182,7 @@ function printPDF(file) {
     }
     // printLog(file, '成功', jobLogFile)
     fs.writeFile(file+'.sta', '打印成功', 'utf8', function(){})
-    request.get('http://127.0.0.1:12300' + encodeURIComponent('mediaplay 10000 "success.wav"'), {timeout:10000}, function(err){ console.log(err) })
+    request.get('http://127.0.0.1:12300/?cmd=' + encodeURIComponent('mediaplay 10000 "success.wav"'), {timeout:10000}, function(err){ console.log(err) })
 
     // use below instead of rename
     fs.createReadStream(file).pipe(fs.createWriteStream(path.join(backupFolder, path.basename(file))))

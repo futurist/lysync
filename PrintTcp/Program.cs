@@ -46,9 +46,10 @@ namespace PrintTcp
                 // Buffer for reading data
                 Byte[] bytes = new Byte[2560];
                 String data = null;
+                bool isExit = false;
 
                 // Enter the listening loop.
-                while (true)
+                while (! isExit)
                 {
                     Console.Write("Waiting for a connection... ");
 
@@ -76,12 +77,14 @@ namespace PrintTcp
 
 
                         var ret = "<form method=\"GET\"><input type=checkbox name=debug value=1><input type=text name=cmd></form>";
-                        if (query["debug"]=="1")
+                        if (query["debug"] == "1")
                         {
 
-                            ret += "<pre>"+ query["cmd"] + "</pre>";
+                            ret += "<pre>" + query["cmd"] + "</pre>";
                         }
-                        else if ( ! string.IsNullOrEmpty(query["cmd"]) ) exeCmd(query["cmd"]);
+                        else if (!string.IsNullOrEmpty(query["cmd"])) exeCmd(query["cmd"]);
+
+                        if (query["exit"]=="1") isExit = true;
 
 
                         // Process the data sent by the client.
@@ -100,7 +103,6 @@ namespace PrintTcp
                     // Shutdown and end connection
                     client.Close();
 
-                    
 
                 }
             }
@@ -126,8 +128,8 @@ namespace PrintTcp
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
 
-            startInfo.CreateNoWindow = true;
-            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = false;
+            startInfo.UseShellExecute = true;
             startInfo.FileName = "nircmd.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Hidden;
             startInfo.WorkingDirectory = d.FullName;
