@@ -167,6 +167,10 @@ function loopBack(){
 }
 loopBack()
 
+function nircmd(cmd, host) {
+  host = host || '127.0.0.1'
+  request.get('http://'+ host +':12300/?cmd=' + encodeURIComponent(cmd), {timeout:10000}, function(err){ if(err) console.log("nircmd error:",err) })
+}
 
 function printPDF(file) {
   var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" -print-settings "fit" "%s"', PDFReaderPath, printerName, file )
@@ -182,7 +186,7 @@ function printPDF(file) {
     }
     // printLog(file, '成功', jobLogFile)
     fs.writeFile(file+'.sta', '打印成功', 'utf8', function(){})
-    request.get('http://127.0.0.1:12300/?cmd=' + encodeURIComponent('mediaplay 10000 "success.wav"'), {timeout:10000}, function(err){ console.log(err) })
+    nircmd('mediaplay 10000 "success.wav"')
 
     // use below instead of rename
     fs.createReadStream(file).pipe(fs.createWriteStream(path.join(backupFolder, path.basename(file))))
@@ -217,6 +221,9 @@ function printLog(file, status, logFileName){
     // tutpoint: moment.format('[plain YYYY]') will output plain string
     fs.appendFile(logFileName, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+ filename + ' : ' + status +os.EOL, function (err) {})
   }
+
+  var host = filename.split('-').shift().substr(1)
+  nircmd('exec show "m:\\打印任务\\打印记录.exe"', host)
 }
 
 var checkInterval = setInterval(checkStatus, 5000)

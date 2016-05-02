@@ -36,7 +36,7 @@ namespace PrintLog
                 DirectoryInfo d = new DirectoryInfo(path);
                 
                 if (arguments.Length > 1) logFolder = arguments[1];
-                else logFolder = d.FullName;
+                else logFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 
                 logfile0 = logFolder + "\\PrintLog0.txt";
                 logfile1 = logFolder + "\\PrintLog1.txt";
@@ -95,6 +95,11 @@ namespace PrintLog
                 textBox2.Text = err.Message;
             }
             textBox3.Text = DateTime.Now.ToString();
+
+            
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+
         }
 
         private void button1_Click(object sender, EventArgs e)
