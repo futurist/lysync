@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("PrintLog")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("微软中国")]
+[assembly: AssemblyCompany("LR")]
 [assembly: AssemblyProduct("PrintLog")]
-[assembly: AssemblyCopyright("Copyright © 微软中国 2016")]
+[assembly: AssemblyCopyright("Copyright © LR 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

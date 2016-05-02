@@ -70,20 +70,31 @@ namespace PrintTcp
                         // Translate data bytes to a ASCII string.
                         data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                         var url = data.Split(' ')[1];
-                        url = HttpUtility.UrlDecode(url).Substring(1);
-                        Console.WriteLine("Received: {0}----{1}", url, data);
+                        //url = HttpUtility.UrlDecode(url).Substring(1);
+                        var query = HttpUtility.ParseQueryString(new Uri("http://localhost"+url).Query);
+                        Console.WriteLine("Received: {0}---{1}", url, query["cmd"]);
+
+
+                        var ret = "<form method=\"GET\"><input type=checkbox name=debug value=1><input type=text name=cmd></form>";
+                        if (query["debug"]=="1")
+                        {
+
+                            ret += "<pre>"+ query["cmd"] + "</pre>";
+                        }
+                        else if ( ! string.IsNullOrEmpty(query["cmd"]) ) exeCmd(query["cmd"]);
+
 
                         // Process the data sent by the client.
                         //data = data.ToUpper();
-                        data = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+                        data = "HTTP/1.1 200 OK\r\nContent-Type:text/html; charset=UTF-8\r\nContent-Length: " + ret.Length + "\r\n\r\n" + ret;
 
                         byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
 
                         // Send back a response.
                         stream.Write(msg, 0, msg.Length);
-                        Console.WriteLine("Sent: {0}", data);
+                        //Console.WriteLine("Sent: {0}", data);
 
-                        exeCmd(url);
+                        
                     }
 
                     // Shutdown and end connection
@@ -116,7 +127,7 @@ namespace PrintTcp
             ProcessStartInfo startInfo = new ProcessStartInfo();
 
             startInfo.CreateNoWindow = true;
-            startInfo.UseShellExecute = true;
+            startInfo.UseShellExecute = false;
             startInfo.FileName = "nircmd.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Hidden;
             startInfo.WorkingDirectory = d.FullName;

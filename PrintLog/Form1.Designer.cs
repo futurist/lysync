@@ -130,7 +130,7 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.tabControl1);
             this.Name = "Form1";
-            this.Text = "资料同步程序";
+            this.Text = "打印记录";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
