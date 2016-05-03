@@ -132,6 +132,11 @@ namespace PrintTcp
                             isExit = true;
                         }
 
+                        if (query["version"] == "1")
+                        {
+                            ret += "<p>"+getVersion()+"</p>";
+                        }
+
                         // Process the data sent by the client.
                         //data = data.ToUpper();
                         data = "HTTP/1.1 200 OK\r\nContent-Type:text/html; charset=UTF-8\r\nContent-Length: " + ret.Length + "\r\n\r\n" + ret;
@@ -164,6 +169,15 @@ namespace PrintTcp
 
             //Console.WriteLine("\nHit enter to continue...");
             //Console.Read();
+        }
+
+
+        static string getVersion()
+        {
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            string version = fvi.FileVersion;
+            return version;
         }
 
         static void exeCmd(string arg)
