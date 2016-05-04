@@ -222,8 +222,12 @@ function printLog(file, status, logFileName){
     fs.appendFile(logFileName, moment().format('\\[YYYY-MM-DD HH:mm:ss\\] ')+ filename + ' : ' + status +os.EOL, function (err) {})
   }
 
-  var host = filename.split('-').shift().substr(1)
-  nircmd('exec show "m:\\打印任务\\打印记录.exe"', host)
+  try{
+    var host = filename.split('-').slice(0,-2).join('-').substr(1)
+    nircmd('exec show "M:\\打印任务\\打印记录.exe"', host)
+  }catch(e){
+    log('send host nircmd error')
+  }
 }
 
 var checkInterval = setInterval(checkStatus, 5000)
