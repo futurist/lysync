@@ -14,6 +14,14 @@ var xml2js = require('xml2js')
 var net=require("net")
 var mkdirp=require("mkdirp")
 
+var WmiClient = require('wmi-client')
+
+var wmi = new WmiClient({
+  host: '127.0.0.1'
+})
+// for pint in queue
+var printQueue = []
+var prefixSelf = 'printjob_'+CLIENT+'_'
 
 var APIKEY = ''
 var CONFIG = require('./config.json')
@@ -32,9 +40,25 @@ var syncthingConfig = syncthingFolder + '/config/config.xml'
 var SyncChild = null
 var SyncConfig = {}
 
-mkdirp(backupFolder)
-mkdirp(jobFolder)
+mkdirp.sync(backupFolder)
+mkdirp.sync(jobFolder)
+
+startupQueue()
 reloadConfig()
+
+function startupQueue () {
+  fs.readdir(jobFolder, function(err, files) {
+    files.forEach(function(v, i) {
+      // if it's queued, do nothing
+      var ext = path.extname(v)
+      var fullPath =  path.join(jobFolder, v)
+      if ( v.indexOf('printjob_') == 0 && v.indexOf(prefixSelf) < 0 && ext === '.pdf') {
+        // remote print, yours
+        printQueue.push(fullPath)
+      }
+    })
+  })
+}
 
 function reloadConfig(){
     fs.readFile( syncthingConfig, function(err, data) {
@@ -93,7 +117,7 @@ http.createServer(function (req, res) {
 
 
 var since = 0
-function loopBack(){
+function loopBack() {
   var param = since || '0&limit=1'
   request.get("http://localhost:8384/rest/events?since="+param, {timeout:11000}, function(err, res, data){
     if (err) {
@@ -153,11 +177,11 @@ function loopBack(){
            item.data.action=='update' && 
            item.data.type=='file' &&
            item.data.error==null  ){
-             var fullPath = path.join(filesFolder, item.data.item)
-             var fileObj = path.parse(item.data.item)
-             if(fileObj.base.match(/^print_job_/) && fileObj.ext=='.pdf'){
-               printPDF(fullPath)
-             }
+          var fullPath = path.join(filesFolder, item.data.item)
+          var fileObj = path.parse(item.data.item)
+          if(fileObj.base.match(/^printjob_/) && fileObj.ext=='.pdf'){
+            printQueue.push(fullPath)
+          }
         }
       }
     }
@@ -167,13 +191,41 @@ function loopBack(){
 }
 loopBack()
 
+function checkAndPrint () {
+  if (!printQueue.length) return
+  var printer = printerName.replace(/\\/g, '%')
+  // printer = 'Bull'
+  wmi.query('SELECT * FROM Win32_Printer WHERE DeviceID like "%' + printer + '%"', function (err, result) {
+    if (err || !result || !result.length) {
+      // printer not exists
+      return console.log('printer not found', printerName)
+    }
+    var p = result[0]
+    var printerID = p.DeviceID
+    if (p.PrinterStatus == 3 && p.WorkOffline === false) {
+      // printer exists, and it's ready: GO PRINT
+      //  2='Unknown', 3='Idle', 4='Printing', 5='Warmup'
+      printQueue.forEach(function (v) {
+        console.log('printing', printerID)
+        printPDF(v, printerID)
+      })
+      printQueue = []
+    } else {
+      // printer exists, but ait's not ready
+      console.log('printer offline', printerID)
+    }
+  })
+}
+
+var printerInterval = setInterval(checkAndPrint, 1000)
+
 function nircmd(cmd, host) {
   host = host || '127.0.0.1'
   request.get('http://'+ host +':12300/?cmd=' + encodeURIComponent(cmd), {timeout:10000}, function(err){ if(err) console.log("nircmd error:",err) })
 }
 
-function printPDF(file) {
-  var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" -print-settings "fit" "%s"', PDFReaderPath, printerName, file )
+function printPDF(file, printerID) {
+  var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" -print-settings "fit" "%s"', PDFReaderPath, printerID, file )
   log(cmd)
   // exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
   // return
@@ -205,9 +257,9 @@ function printPDF(file) {
   })
 }
 
-function printLog(file, status, logFileName){
+function printLog(file, status, logFileName) {
   logFileName = logFileName || jobLogFileLocal
-  var content,filename = path.basename(file).replace('print_job_', '').replace(/\.sta$/, '')
+  var content,filename = path.basename(file).replace(/^printjob_\d+_/, '').replace(/\.sta$/, '')
   try { content = fs.readFileSync(logFileName, 'utf8')} catch(e) {content = '' }
   var isNew = content.indexOf(filename)<0
   if(status==='LocalIndexUpdated'){
@@ -232,7 +284,7 @@ function printLog(file, status, logFileName){
 
 var checkInterval = setInterval(checkStatus, 5000)
 
-function checkStatus(){
+function checkStatus() {
   request.get('http://127.0.0.1:8384/rest/system/error', function(err, res, data){
     if (err) {
       return log('error connect server', err)
@@ -249,7 +301,7 @@ function checkStatus(){
     var folder = msg && msg.pop()
     if( folder ){
       var app = SyncConfig.configuration.folder.find(function(v){ return v.$.id==folder })
-      mkdirp( app.$.path )
+      mkdirp.sync( app.$.path )
       fs.writeFileSync(app.$.path + '\\.stfolder', '')
       exec('attrib +a +s +h "'+ app.$.path + '\\.stfolder"')
       clearAllErrors()
