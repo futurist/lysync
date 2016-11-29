@@ -14,6 +14,11 @@ var xml2js = require('xml2js')
 var net=require("net")
 var mkdirp=require("mkdirp")
 
+var WmiClient = require('wmi-client')
+
+var wmi = new WmiClient({
+  host: '127.0.0.1'
+})
 
 var APIKEY = ''
 var CONFIG = require('./config.json')
@@ -32,7 +37,7 @@ var syncthingFolder = path.resolve(__dirname, '..')
 var syncthingConfig = syncthingFolder + '/config/config.xml'
 var SyncChild = null
 var SyncConfig = {}
-var printQueue = []
+var printQueue = {}
 
 mkdirp(backupFolder)
 mkdirp(jobFolder)
@@ -92,30 +97,30 @@ http.createServer(function (req, res) {
   res.end(req.url)
 }).listen(12301)
 
-
-
 function loopBack() {
   fs.readdir(jobFolder, function(err, files) {
     if(err) {
       return mkdirp(jobFolder)
     }
     files.forEach(function(v, i) {
+      // if it's queued, do nothing
+      if(v in printQueue) return
       var ext = path.extname(v)
       var fullPath =  path.join(jobFolder, v)
-      if( v.indexOf(prefixSelf) === 0 ) {
-        // the return of ours
-        if( ext ==='.sta' ) {
-          // local print
-          var fileObj = path.parse(v)
-          fs.readFile(fullPath, 'utf8', function(e, data) {
-            if(e) return log(e)
-            printLog(v.replace(/\.sta$/, ''), data)
-            setTimeout(function(){fs.unlink(fullPath, function(){})})
-          })
-        }
-      } else if( v.indexOf('printjob_')===0 && ext === '.pdf') {
+      if (v.indexOf(prefixSelf) === 0 && ext === '.sta') {
+        printQueue[v] = 1
+        // the return status file of ours
+        var fileObj = path.parse(v)
+        fs.readFile(fullPath, 'utf8', function (e, data) {
+          if (e) return log(e)
+          console.log('print result', v, data)
+          printLog(v.replace(/\.sta$/, '').replace(prefixSelf, ''), data)
+          setTimeout(function () { fs.unlink(fullPath, function () {}) })
+        })
+      } else if (v.indexOf('printjob_') === 0 && ext === '.pdf') {
         // remote print, yours
-        printPDF(fullPath)
+        printQueue[v] = {status: 'pending'}
+        checkAndPrint(fullPath)
       }
     })
   })
@@ -124,47 +129,59 @@ function loopBack() {
 }
 loopBack()
 
-function nircmd(cmd, host) {
-  host = host || '127.0.0.1'
-  request.get('http://'+ host +':12300/?cmd=' + encodeURIComponent(cmd), {timeout:10000}, function(err){ if(err) console.log("nircmd error:",err) })
+function checkAndPrint (fullPath) {
+  var file = path.basename(fullPath)
+  var printer = printerName.replace(/\\/g, '%')
+  // printer = 'Bull'
+  wmi.query('SELECT * FROM Win32_Printer WHERE DeviceID like "%'+ printer +'%"', function (err, result) {
+    if(err || !result || !result.length) {
+      // printer not exists
+      delete printQueue[file]
+      return console.log('printer not found', printerName, err)
+    }
+    var p = result[0]
+    var printerID = p.DeviceID
+    if (p.PrinterStatus == 3 && p.WorkOffline === false) {
+      // printer exists, and it's ready: GO PRINT
+      //  2='Unknown', 3='Idle', 4='Printing', 5='Warmup'
+      console.log('printing', fullPath, printerID)
+      printPDF(fullPath, printerID)
+    } else {
+      // printer exists, but ait's not ready
+      delete printQueue[file]
+      console.log('printer offline', printerID)
+    }
+  })
 }
 
-function printPDF(file) {
-  var queue = printQueue.filter(function(v) {
-    return v.file==file
-  }).shift()
-
-  if(queue) return
-  if(!queue) printQueue.push({
-    file: file,
-    status: '准备打印'
-  })
-  console.log('printing', file)
-  return
-  var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" -print-settings "fit" "%s"', PDFReaderPath, printerName, file )
-  log(cmd)
+function printPDF(fullPath, printerID) {
+  var file = path.basename(fullPath)
+  var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" -print-settings "fit" "%s"', PDFReaderPath, printerID, fullPath )
+  console.log(cmd)
   // exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
   // return
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)
     if(err) {
-      fs.writeFile(file+'.sta', '打印失败', 'utf8', function(){})
-      return log('print error', file, err)
+      fs.writeFile(fullPath+'.sta', '打印失败', 'utf8', function(){})
+      printQueue[file] = {status: 'error', error: err }
+      return log('print error', fullPath, err)
     }
-    fs.writeFile(file+'.sta', '打印成功', 'utf8', function(){})
+    fs.writeFile(fullPath+'.sta', '打印成功', 'utf8', function(){})
     nircmd('mediaplay 10000 "success.wav"')
 
     // use below instead of rename
-    fs.createReadStream(file).pipe(fs.createWriteStream(path.join(backupFolder, path.basename(file))))
+    fs.createReadStream(fullPath).pipe(fs.createWriteStream(path.join(backupFolder, path.basename(fullPath))))
       .on('finish', function(){
-        fs.unlink(file)
+        fs.unlink(fullPath)
+        printQueue[file] = {status: 'success'}
       })
 
     setTimeout(function(){
       // fs.unlink(file, function (err) {
       //   if(err) log('cannot delete file ', file)
       // })
-      log('rename file', file,path.join(backupFolder, path.basename(file)))
+      log('rename file', fullPath,path.join(backupFolder, path.basename(fullPath)))
       // below not work when d: to e: : Error: EXDEV: cross-device link not permitted, rename, use pipe above
 		  // fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
     }, 1000)
@@ -194,6 +211,11 @@ function printLog(file, status, logFileName) {
   }catch(e){
     log('send host nircmd error')
   }
+}
+
+function nircmd(cmd, host) {
+  host = host || '127.0.0.1'
+  request.get('http://'+ host +':12300/?cmd=' + encodeURIComponent(cmd), {timeout:10000}, function(err){ if(err) console.log("nircmd error:",err) })
 }
 
 var checkInterval = setInterval(checkStatus, 5000)

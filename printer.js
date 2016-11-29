@@ -5,9 +5,9 @@ var wmi = new WmiClient({
   host: '127.0.0.1'
 })
 
-const name = 'Bull'
+const name = 'Toshiba'
 
-wmi.query('SELECT * FROM Win32_Printer WHERE DeviceID like "%'+ name +'%"', function (err, result) {
+wmi.query('SELECT * FROM Win32_Printer WHERE DeviceID like "%pc03%'+ name +'%"', function (err, result) {
   console.log(result)
   if (result.length) {
     const p = result[0]
