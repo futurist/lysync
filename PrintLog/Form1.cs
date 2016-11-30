@@ -34,8 +34,8 @@ namespace PrintLog
             try
             {
                 DirectoryInfo d = new DirectoryInfo(path);
-                
-                if (arguments.Length > 1) logFolder = arguments[1];
+
+                if (arguments.Length > 1 && arguments[1] != "") logFolder = arguments[1];
                 else logFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 
                 logfile0 = logFolder + "\\PrintLog0.txt";

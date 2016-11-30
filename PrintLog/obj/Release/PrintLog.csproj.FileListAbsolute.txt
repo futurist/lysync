@@ -1,0 +1,9 @@
+F:\crx\lysync\PrintLog\bin\Release\PrintLog.exe.config
+F:\crx\lysync\PrintLog\bin\Release\PrintLog.exe
+F:\crx\lysync\PrintLog\bin\Release\PrintLog.pdb
+F:\crx\lysync\PrintLog\obj\Release\ResolveAssemblyReference.cache
+F:\crx\lysync\PrintLog\obj\Release\PrintLog.Form1.resources
+F:\crx\lysync\PrintLog\obj\Release\PrintLog.Properties.Resources.resources
+F:\crx\lysync\PrintLog\obj\Release\PrintLog.csproj.GenerateResource.Cache
+F:\crx\lysync\PrintLog\obj\Release\PrintLog.exe
+F:\crx\lysync\PrintLog\obj\Release\PrintLog.pdb

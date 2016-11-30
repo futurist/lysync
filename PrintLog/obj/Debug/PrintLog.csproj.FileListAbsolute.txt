@@ -16,3 +16,6 @@ D:\crx\lysync\PrintLog\obj\Debug\ResolveAssemblyReference.cache
 D:\crx\lysync\PrintLog\obj\Debug\PrintLog.Form1.resources
 D:\crx\lysync\PrintLog\obj\Debug\PrintLog.Properties.Resources.resources
 D:\crx\lysync\PrintLog\obj\Debug\PrintLog.csproj.GenerateResource.Cache
+F:\crx\lysync\PrintLog\bin\Debug\PrintLog.exe.config
+F:\crx\lysync\PrintLog\obj\Debug\PrintLog.exe
+F:\crx\lysync\PrintLog\obj\Debug\PrintLog.pdb
