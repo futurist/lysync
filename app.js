@@ -159,16 +159,8 @@ function loopBack() {
         // local print
         if(item.type=='LocalIndexUpdated' && item.data.items){
           item.data.filenames.forEach(function(v, i){
-            if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
-            else if(v.match(/\.sta$/)){
-              var fullPath =  path.join(filesFolder, v)
-              var fileObj = path.parse(v)
-              fs.readFile(fullPath, 'utf8', function(e, data){
-                if(e) return log(e)
-                printLog(v, data)
-                setTimeout(function(){fs.unlink(fullPath, function(){})}, 1000)
-              })
-            }
+            // if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
+            // else if(v.match(/\.sta$/)){}
           })
         }
 
@@ -177,10 +169,20 @@ function loopBack() {
            item.data.action=='update' && 
            item.data.type=='file' &&
            item.data.error==null  ){
-          var fullPath = path.join(filesFolder, item.data.item)
-          var fileObj = path.parse(item.data.item)
-          if(fileObj.base.match(/^printjob_/) && fileObj.ext=='.pdf'){
-            printQueue.push(fullPath)
+          var file = item.data.item
+          var fullPath = path.join(filesFolder, file)
+          var fileObj = path.parse(file)
+          if(fileObj.base.match(/^printjob_/)) {
+            if(fileObj.ext=='.pdf') {
+              printQueue.push(fullPath)
+            }
+            if (fileObj.ext == '.sta') {
+              fs.readFile(fullPath, 'utf8', function (e, data) {
+                if (e) return log(e)
+                printLog(file, data)
+                setTimeout(function () { fs.unlink(fullPath, function () {}) }, 1000)
+              })
+            }
           }
         }
       }
@@ -193,9 +195,9 @@ loopBack()
 
 function checkAndPrint () {
   if (!printQueue.length) return
-  var printer = printerName.replace(/\\/g, '%')
+  var printer = printerName.replace(/\\/g, '\\\\')
   // printer = 'Bull'
-  wmi.query('SELECT * FROM Win32_Printer WHERE DeviceID like "%' + printer + '%"', function (err, result) {
+  wmi.query('SELECT * FROM Win32_Printer WHERE DeviceID = "' + printer + '"', function (err, result) {
     if (err || !result || !result.length) {
       // printer not exists
       return console.log('printer not found', printerName)
