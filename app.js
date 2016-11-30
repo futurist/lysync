@@ -278,8 +278,8 @@ function printLog(file, status, logFileName) {
 
   try{
     var host = filename.split('-').slice(0,-2).join('-').substr(1)
-    nircmd('exec show "M:\\打印任务\\打印记录.exe"', host)
-  }catch(e){
+    nircmd('exec show "M:\\打印任务\\打印记录.exe" "" ' + CLIENT, host)
+  }catch(e) {
     log('send host nircmd error')
   }
 }
