@@ -21,7 +21,7 @@ char bufQuery[MAX_BUF_LEN];
 char bufUri[MAX_BUF_LEN];
 
 // store exe path
-WCHAR path[MAX_PATH_LEN];
+char path[MAX_PATH_LEN];
 
 static bool isRunning = true;
 
@@ -62,14 +62,14 @@ static bool updateExe(struct mg_connection *nc, char * source) {
 	char buf[MAX_BUF_LEN];
 
 	memset(path, 0, MAX_PATH_LEN);
-	GetModuleFileName(0, path, MAX_PATH_LEN - 1);
+	GetModuleFileNameA(0, path, MAX_PATH_LEN - 1);
 
 	printf("updating %s, %s\n\n", source, path);
 
-	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 5000 execmd copy /y \"%s\" \"%ls\"", source, path)) return false;
+	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 5000 execmd copy /y \"%s\" \"%s\"", source, path)) return false;
 	nircmd(buf);
 
-	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 10000 exec hide \"%ls\"", path)) return false;
+	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 10000 exec hide \"%s\"", path)) return false;
 	nircmd(buf);
 
 	return true;
