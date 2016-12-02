@@ -10,26 +10,44 @@
 #define ACTION_UPDATE 101
 
 #define MAX_PATH_LEN 2550
+#define MAX_BUF_LEN 2999
 
 const char *s_http_port = "8000";
 
-char bufRes[2550];
-char bufCmd[2550];
-char bufUri[2550];
+char bufRes[MAX_BUF_LEN];
+char bufQuery[MAX_BUF_LEN];
+char bufUri[MAX_BUF_LEN];
 
 // store exe path
 WCHAR path[MAX_PATH_LEN];
 
 static bool isRunning = true;
 
-static LPWSTR updateExe() {
-	memset(path, 0, MAX_PATH_LEN);
-	GetModuleFileName(0, path, MAX_PATH_LEN - 1);
-	return path;
+static int fileExist(LPWSTR filename) {
+	return GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES;
 }
 
-static HINSTANCE nircmd(char * arg, int showFlag) {
-	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, showFlag);
+static HINSTANCE nircmd(char * arg) {
+	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, SW_HIDE);
+}
+
+static bool updateExe(LPWSTR source) {
+	// source file not exists
+	if (!fileExist(source)) return false;
+
+	char buf[MAX_BUF_LEN];
+
+	memset(path, 0, MAX_PATH_LEN);
+	GetModuleFileName(0, path, MAX_PATH_LEN - 1);
+
+	sprintf(buf, "cmdwait 5000 execmd copy /y \"%ls\" \"%ls\"", source, path);
+	nircmd(buf);
+
+	sprintf(buf, "cmdwait 10000 exec hide \"%ls\"", path);
+	nircmd(buf);
+
+	return true;
+
 }
 
 static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int action) {
@@ -38,15 +56,19 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 	switch (ev) {
 	case MG_EV_HTTP_REQUEST:
 
-		int count;
+		int queryStrLen = mg_url_decode(hm->query_string.p, hm->query_string.len, bufQuery, MAX_BUF_LEN, true);
+		
+		// parse URI
+		sprintf(bufUri, "%.*s", hm->uri.len, hm->uri.p);
+		str_array uri_part = str_split(bufUri, "/");
+
+		// update result
+		bool result;
 
 		switch (action)
 		{
 		case ACTION_CMD:
 
-			// parse URI
-			sprintf(bufUri, "%.*s", hm->uri.len, hm->uri.p);
-			str_array uri_part = str_split(bufUri, "/");
 
 			sprintf(bufRes, "[cmd]%.*s<br>%.*s<br>%d-%s",
 				hm->query_string.len, hm->query_string.p,
@@ -55,22 +77,20 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 			);
 
 			// decode URI
-			count = mg_url_decode(hm->query_string.p, hm->query_string.len, bufCmd, 255, true);
 
 			// execute nircmd
-			if (count > 0) nircmd(bufCmd, SW_SHOWNORMAL);
+			if (queryStrLen > 0) nircmd(bufQuery);
 
 			break;
 
 		case ACTION_UPDATE:
 			// do upgrade
 
-			nircmd("cmdwait 5000 execmd copy /y \"M:\\日常软件\\PrintTcp.exe\" \"~$folder.windows$\\PrintTcp.exe\"", SW_HIDE);
-			nircmd("cmdwait 10000 exec hide \"~$folder.windows$\\PrintTcp.exe\"", SW_HIDE);
+			result = updateExe(LPWSTR(bufQuery));
 
-			sprintf(bufRes, "update ok: %ls", updateExe() );
+			sprintf(bufRes, "update result: %d, source: %s", result, bufQuery);
 
-			isRunning = false;
+			if(result) isRunning = false;
 
 			break;
 
