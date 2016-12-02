@@ -223,7 +223,15 @@ var printerInterval = setInterval(checkAndPrint, 1000)
 
 function nircmd(cmd, host) {
   host = host || '127.0.0.1'
-  request.get('http://'+ host +':12300/?cmd=' + encodeURIComponent(cmd), {timeout:10000}, function(err){ if(err) console.log("nircmd error:",err) })
+  // try c# version
+  request.get('http://'+ host +':12300/?cmd=' + encodeURIComponent(cmd), {timeout:10000}, function(err){
+    if(err) {
+       // try c++ version
+      request.get('http://'+ host +':12310/cmd?' + encodeURIComponent(cmd), {timeout:10000}, function(err){
+        if(err) console.log("nircmd error:",err)
+      })
+    }
+  })
 }
 
 function printPDF(file, printerID) {
