@@ -25,7 +25,7 @@ static bool isRunning = true;
 
 
 static HINSTANCE nircmd(char * arg) {
-	printf("** nircmd: %s", arg);
+	printf("** nircmd: %s\n\n", arg);
 	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, 1);
 }
 
@@ -54,8 +54,8 @@ bool ssprintf(struct mg_connection *nc, char *buf, int size, const char *fmt, ..
 
 static bool updateExe(struct mg_connection *nc, char * source) {
 
-	// source file not exists
-	if (!fileExists(source)) return false;
+	// source file not exists, or not exe file
+	if (!fileExists(source) || !striEndWith(source, ".exe") ) return false;
 
 	char buf[MAX_BUF_LEN];
 
@@ -81,6 +81,7 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 	switch (ev) {
 	case MG_EV_HTTP_REQUEST:
 
+		// decode URI
 		int queryStrLen = mg_url_decode(hm->query_string.p, hm->query_string.len, bufQuery, MAX_BUF_LEN, true);
 		
 		// parse URI
@@ -94,15 +95,12 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 		{
 		case ACTION_CMD:
 
-
 			if (ssprintf(nc, bufRes, MAX_BUF_LEN, "[cmd]%.*s<br>%.*s<br>%d-%s<br>cmd: %s",
 				hm->query_string.len, hm->query_string.p,
 				hm->uri.len, hm->uri.p,
-				uri_part.len, uri_part.p[1],
+				uri_part.len, uri_part.p[0],
 				bufQuery
 			))return;
-
-			// decode URI
 
 			// execute nircmd
 			if (queryStrLen > 0) nircmd(bufQuery);
@@ -162,6 +160,8 @@ int main(void) {
 
 	mg_mgr_init(&mgr, NULL);
 	c = mg_bind(&mgr, s_http_port, ev_handler);
+
+	// below ensure only one instance on port
 	if (c == NULL) {
 		printf("Cannot start on port %s\n", s_http_port);
 		return EXIT_FAILURE;

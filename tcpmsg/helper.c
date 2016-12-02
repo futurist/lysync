@@ -44,3 +44,17 @@ int fileExists(const char *filename)
 	if (fp != NULL) fclose(fp);
 	return (fp != NULL);
 }
+
+/*
+Check string is end with extension/suffix
+*/
+int striEndWith(char* str, const char* suffix)
+{
+	size_t strLen = strlen(str);
+	size_t suffixLen = strlen(suffix);
+	if (suffixLen <= strLen) {
+		return strnicmp(str + strLen - suffixLen, suffix, suffixLen) == 0;
+	}
+	return 0;
+}
+
