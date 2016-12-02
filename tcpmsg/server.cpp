@@ -28,10 +28,33 @@ static int fileExist(LPWSTR filename) {
 }
 
 static HINSTANCE nircmd(char * arg) {
-	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, SW_HIDE);
+	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, 1);
 }
 
-static bool updateExe(LPWSTR source) {
+/*
+safe sprintf for nc
+If buffer is too small, close connection and response a 500 error
+*/
+bool ssprintf(struct mg_connection *nc, char *buf, int size, const char *fmt, ...) {
+	va_list args;
+	int len;
+
+	va_start(args, fmt);
+	len = vsnprintf(buf, (size_t) size, fmt, args);
+	va_end(args);
+
+	if (len < 0 || len >= size) {
+		// buffer is too small
+		mg_printf(nc, "%s",
+			"HTTP/1.1 500 String is too long\r\n"
+			"Content-Length: 0\r\n\r\n");
+		nc->flags |= MG_F_SEND_AND_CLOSE;
+		return true;
+	}
+	return false;
+}
+
+static bool updateExe(struct mg_connection *nc, LPWSTR source) {
 	// source file not exists
 	if (!fileExist(source)) return false;
 
@@ -40,15 +63,16 @@ static bool updateExe(LPWSTR source) {
 	memset(path, 0, MAX_PATH_LEN);
 	GetModuleFileName(0, path, MAX_PATH_LEN - 1);
 
-	sprintf(buf, "cmdwait 5000 execmd copy /y \"%ls\" \"%ls\"", source, path);
+	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 5000 execmd copy /y \"%ls\" \"%ls\"", source, path)) return false;
 	nircmd(buf);
 
-	sprintf(buf, "cmdwait 10000 exec hide \"%ls\"", path);
+	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 10000 exec hide \"%ls\"", path)) return false;
 	nircmd(buf);
 
 	return true;
 
 }
+
 
 static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int action) {
 	struct http_message *hm = (struct http_message *) ev_data;
@@ -59,7 +83,7 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 		int queryStrLen = mg_url_decode(hm->query_string.p, hm->query_string.len, bufQuery, MAX_BUF_LEN, true);
 		
 		// parse URI
-		sprintf(bufUri, "%.*s", hm->uri.len, hm->uri.p);
+		if (ssprintf(nc, bufUri, MAX_BUF_LEN, "%.*s", hm->uri.len, hm->uri.p)) return;
 		str_array uri_part = str_split(bufUri, "/");
 
 		// update result
@@ -70,11 +94,12 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 		case ACTION_CMD:
 
 
-			sprintf(bufRes, "[cmd]%.*s<br>%.*s<br>%d-%s",
+			if (ssprintf(nc, bufRes, MAX_BUF_LEN, "[cmd]%.*s<br>%.*s<br>%d-%s<br>cmd: %s",
 				hm->query_string.len, hm->query_string.p,
 				hm->uri.len, hm->uri.p,
-				uri_part.len, uri_part.p[0]
-			);
+				uri_part.len, uri_part.p[1],
+				bufQuery
+			))return;
 
 			// decode URI
 
@@ -86,9 +111,9 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 		case ACTION_UPDATE:
 			// do upgrade
 
-			result = updateExe(LPWSTR(bufQuery));
+			result = updateExe(nc, LPWSTR(bufQuery));
 
-			sprintf(bufRes, "update result: %d, source: %s", result, bufQuery);
+			if (ssprintf(nc, bufRes, MAX_BUF_LEN, "update result: %d, source: %s", result, bufQuery))return;
 
 			if(result) isRunning = false;
 
@@ -96,7 +121,10 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 
 		default:
 
-			sprintf(bufRes, "<h1>%s</h1>%.*s<br>%.*s", "hi there", hm->uri.len, hm->uri.p, hm->query_string.len, hm->query_string.p);
+			if (ssprintf(nc, bufRes, MAX_BUF_LEN, 
+				"<h1>%s</h1>%.*s<br>%.*s", "hi there", 
+				hm->uri.len, hm->uri.p,
+				hm->query_string.len, hm->query_string.p)) return;
 
 			break;
 		}
