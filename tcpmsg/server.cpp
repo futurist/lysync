@@ -4,10 +4,12 @@
 #include "mongoose.h"
 #include "helper.c"
 
+#define VERSION __TIMESTAMP__
 
 #define ACTION_DEFAULT 0
-#define ACTION_CMD 100
-#define ACTION_UPDATE 101
+#define ACTION_VERSION 100
+#define ACTION_CMD 101
+#define ACTION_UPDATE 102
 
 #define MAX_PATH_LEN 2550
 #define MAX_BUF_LEN 2999
@@ -26,7 +28,7 @@ static bool isRunning = true;
 
 static HINSTANCE nircmd(char * arg) {
 	printf("** nircmd: %s\n\n", arg);
-	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, 1);
+	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, SW_HIDE);
 }
 
 /*
@@ -93,6 +95,12 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 
 		switch (action)
 		{
+		case ACTION_VERSION:
+
+			if (ssprintf(nc, bufRes, MAX_BUF_LEN, "<h1>version</h1>%s", VERSION)) return;
+
+			break;
+
 		case ACTION_CMD:
 
 			if (ssprintf(nc, bufRes, MAX_BUF_LEN, "[cmd]%.*s<br>%.*s<br>%d-%s<br>cmd: %s",
@@ -153,6 +161,10 @@ static void handle_update(struct mg_connection *nc, int ev, void *ev_data) {
 	handle_request(nc, ev, ev_data, ACTION_UPDATE);
 }
 
+static void handle_version(struct mg_connection *nc, int ev, void *ev_data) {
+	handle_request(nc, ev, ev_data, ACTION_VERSION);
+}
+
 
 int main(void) {
 	struct mg_mgr mgr;
@@ -169,10 +181,11 @@ int main(void) {
 
 	mg_set_protocol_http_websocket(c);
 
+	mg_register_http_endpoint(c, "/version", handle_version);
 	mg_register_http_endpoint(c, "/cmd", handle_cmd);
 	mg_register_http_endpoint(c, "/update", handle_update);
 
-	printf("Starting on port %s, at time: %.2lf\n", s_http_port, mg_time());
+	printf("Starting on port %s, at time: %.2lf ver: %s\n", s_http_port, mg_time(), VERSION);
 	while (isRunning) {
 		mg_mgr_poll(&mgr, 1000);
 	}
