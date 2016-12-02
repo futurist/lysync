@@ -14,7 +14,7 @@
 #define MAX_PATH_LEN 2550
 #define MAX_BUF_LEN 2999
 
-const char *s_http_port = "8000";
+const char *s_http_port = "12310";
 
 char bufRes[MAX_BUF_LEN];
 char bufQuery[MAX_BUF_LEN];
