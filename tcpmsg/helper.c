@@ -1,5 +1,6 @@
 #include <stddef.h>
-#include "string.h"
+#include <stdio.h>
+#include <string.h>
 
 // define array of strings
 struct str_array
@@ -34,3 +35,12 @@ struct str_array str_split(char *a_str, const char *a_delim) {
 	return ret;
 }
 
+/*
+Check if file exists
+*/
+int fileExists(const char *filename)
+{
+	FILE *fp = fopen(filename, "r");
+	if (fp != NULL) fclose(fp);
+	return (fp != NULL);
+}

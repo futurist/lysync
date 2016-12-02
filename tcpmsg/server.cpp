@@ -23,11 +23,9 @@ WCHAR path[MAX_PATH_LEN];
 
 static bool isRunning = true;
 
-static int fileExist(LPWSTR filename) {
-	return GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES;
-}
 
 static HINSTANCE nircmd(char * arg) {
+	printf("** nircmd: %s", arg);
 	return ShellExecuteA(NULL, "Open", "nircmd.exe", arg, NULL, 1);
 }
 
@@ -45,25 +43,28 @@ bool ssprintf(struct mg_connection *nc, char *buf, int size, const char *fmt, ..
 
 	if (len < 0 || len >= size) {
 		// buffer is too small
-		mg_printf(nc, "%s",
-			"HTTP/1.1 500 String is too long\r\n"
-			"Content-Length: 0\r\n\r\n");
+		mg_printf(nc, 
+			"HTTP/1.1 500 String is too long %d\r\nContent-Length: 0\r\n\r\n",
+			len);
 		nc->flags |= MG_F_SEND_AND_CLOSE;
 		return true;
 	}
 	return false;
 }
 
-static bool updateExe(struct mg_connection *nc, LPWSTR source) {
+static bool updateExe(struct mg_connection *nc, char * source) {
+
 	// source file not exists
-	if (!fileExist(source)) return false;
+	if (!fileExists(source)) return false;
 
 	char buf[MAX_BUF_LEN];
 
 	memset(path, 0, MAX_PATH_LEN);
 	GetModuleFileName(0, path, MAX_PATH_LEN - 1);
 
-	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 5000 execmd copy /y \"%ls\" \"%ls\"", source, path)) return false;
+	printf("updating %s, %s\n\n", source, path);
+
+	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 5000 execmd copy /y \"%s\" \"%ls\"", source, path)) return false;
 	nircmd(buf);
 
 	if (ssprintf(nc, buf, MAX_BUF_LEN, "cmdwait 10000 exec hide \"%ls\"", path)) return false;
@@ -111,7 +112,7 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 		case ACTION_UPDATE:
 			// do upgrade
 
-			result = updateExe(nc, LPWSTR(bufQuery));
+			result = updateExe(nc, bufQuery);
 
 			if (ssprintf(nc, bufRes, MAX_BUF_LEN, "update result: %d, source: %s", result, bufQuery))return;
 
