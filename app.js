@@ -162,7 +162,7 @@ function loopBack() {
             // if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
             // else if(v.match(/\.sta$/)){}
             if(v.indexOf('拉货计划.xls') > -1) {
-              nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', v) +'"', 'PC33')
+              // nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', v) +'"', 'PC33')
             }
           })
         }
@@ -188,7 +188,7 @@ function loopBack() {
               })
             }
             if(fileObj.base.indexOf('拉货计划.xls') > -1) {
-              nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', 'PC33')
+              // nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', 'PC33')
             }
           }
         }
