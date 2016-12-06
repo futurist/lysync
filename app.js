@@ -19,6 +19,10 @@ var WmiClient = require('wmi-client')
 var wmi = new WmiClient({
   host: '127.0.0.1'
 })
+
+var sheetGetAllText = require('./xls.js')
+var xlsTexts = {}
+
 // for pint in queue
 var printQueue = []
 var prefixSelf = 'printjob_'+CLIENT+'_'
@@ -161,15 +165,12 @@ function loopBack() {
           item.data.filenames.forEach(function(v, i){
             // if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
             // else if(v.match(/\.sta$/)){}
-            if(v.indexOf('拉货计划.xls') > -1) {
-              // nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', v) +'"', 'PC33')
-            }
           })
         }
 
         // remote print
-        if(item.type=='ItemFinished' && 
-           item.data.action=='update' && 
+        if(item.type=='ItemFinished' &&
+           item.data.action=='update' &&
            item.data.type=='file' &&
            item.data.error==null  ){
           //nircmd qboxcom "sdoifj" "111" shexec "open" "c:\abc.log"
@@ -188,7 +189,13 @@ function loopBack() {
               })
             }
             if(fileObj.base.indexOf('拉货计划.xls') > -1) {
-              // nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', 'PC33')
+              var text = sheetGetAllText(fullPath)
+              if(xlsTexts[fullPath] !== text) {
+                xlsTexts[fullPath] = text
+                ;['PC33'].forEach(function(host) {
+                  nircmd('nircmd qboxcomtop "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', host)
+                })
+              }
             }
           }
         }
