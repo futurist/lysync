@@ -161,6 +161,9 @@ function loopBack() {
           item.data.filenames.forEach(function(v, i){
             // if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
             // else if(v.match(/\.sta$/)){}
+            if(v.indexOf('拉货计划.xls') > -1) {
+              nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', v) +'"', 'PC33')
+            }
           })
         }
 
@@ -183,6 +186,9 @@ function loopBack() {
                 printLog(file, data)
                 setTimeout(function () { fs.unlink(fullPath, function () {}) }, 1000)
               })
+            }
+            if(fileObj.base.indexOf('拉货计划.xls') > -1) {
+              nircmd('nircmd qboxcom "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', 'PC33')
             }
           }
         }

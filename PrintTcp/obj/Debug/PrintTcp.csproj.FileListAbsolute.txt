@@ -8,3 +8,8 @@ D:\crx\lysync\PrintTcp\obj\Debug\PrintTcp.pdb
 D:\crx\lysync\PrintTcp\bin\Debug\PrintTcp.exe
 D:\crx\lysync\PrintTcp\bin\Debug\PrintTcp.pdb
 D:\crx\lysync\PrintTcp\obj\Debug\ResolveAssemblyReference.cache
+F:\crx\lysync\PrintTcp\obj\Debug\PrintTcp.exe
+F:\crx\lysync\PrintTcp\obj\Debug\PrintTcp.pdb
+F:\crx\lysync\PrintTcp\obj\Debug\ResolveAssemblyReference.cache
+F:\crx\lysync\PrintTcp\bin\Debug\PrintTcp.exe
+F:\crx\lysync\PrintTcp\bin\Debug\PrintTcp.pdb

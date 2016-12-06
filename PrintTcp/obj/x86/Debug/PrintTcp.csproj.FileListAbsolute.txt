@@ -1,0 +1,5 @@
+F:\crx\lysync\PrintTcp\bin\x86\Debug\PrintTcp.exe
+F:\crx\lysync\PrintTcp\bin\x86\Debug\PrintTcp.pdb
+F:\crx\lysync\PrintTcp\obj\x86\Debug\ResolveAssemblyReference.cache
+F:\crx\lysync\PrintTcp\obj\x86\Debug\PrintTcp.exe
+F:\crx\lysync\PrintTcp\obj\x86\Debug\PrintTcp.pdb

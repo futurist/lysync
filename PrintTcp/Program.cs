@@ -8,10 +8,13 @@ using System.IO;
 using System.Diagnostics;
 using System.Web;
 
+
 namespace PrintTcp
 {
+
     class Program
     {
+
         static void Main(string[] args)
         {
             // Make only one instance
@@ -24,6 +27,7 @@ namespace PrintTcp
             }
             GC.KeepAlive(mutex);
 
+            Console.WriteLine(getExePath());
             createTCP();
         }
 
@@ -127,19 +131,28 @@ namespace PrintTcp
 
                         if (query["update"] == "1")
                         {
-                            exeCmd("cmdwait 5000 execmd copy /y \"M:\\日常软件\\PrintTcp.exe\" \"~$folder.windows$\\PrintTcp.exe\"");
-                            exeCmd("cmdwait 10000 exec hide \"~$folder.windows$\\PrintTcp.exe\"");
-                            isExit = true;
+                            var target = getExePath();
+                            var source = query["source"];
+
+                            source = !string.IsNullOrEmpty(source) && Path.GetExtension(source).ToLower() == ".exe" && File.Exists(source) ? source : "M:\\日常软件\\PrintTcp.exe";
+
+                            if (File.Exists(source))
+                            {
+                                Console.WriteLine("update from {0} to {1}", source, target );
+                                exeCmd( String.Format("cmdwait 5000 execmd copy /y \"{0}\" \"{1}\"", source, target) );
+                                exeCmd( String.Format("cmdwait 10000 exec hide \"{0}\"", target) );
+                                isExit = true;
+                            }
                         }
 
-                        if (query["version"] == "1")
+                        if ( !string.IsNullOrEmpty( query["version"] ) )
                         {
-                            ret += "<p>"+getVersion()+"</p>";
+                            ret += "<p>" + getVersion() + "</p>" + File.GetCreationTime(getExePath());
                         }
 
                         // Process the data sent by the client.
                         //data = data.ToUpper();
-                        data = "HTTP/1.1 200 OK\r\nContent-Type:text/html; charset=UTF-8\r\nContent-Length: " + ret.Length + "\r\n\r\n" + ret;
+                        data = "HTTP/1.1 200 OK\r\nContent-Type:text/html; charset=UTF-8\r\nX-App: PrintTcp\r\nContent-Length: " + ret.Length + "\r\n\r\n" + ret;
 
                         byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
 
@@ -172,10 +185,13 @@ namespace PrintTcp
         }
 
 
+        static string getExePath() { 
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            return assembly.Location;
+        }
         static string getVersion()
         {
-            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(getExePath());
             string version = fvi.FileVersion;
             return version;
         }
