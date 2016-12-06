@@ -139,8 +139,9 @@ static void handle_request(struct mg_connection *nc, int ev, void *ev_data, int 
 		printf("%f %.*s", mg_time(), hm->message.len, hm->message.p);
 		mg_send_head(nc, 200, strlen(bufRes),
 			"Content-Type: text/html; charset=UTF-8\r\n"
+			"X-App: tcpmsg\r\n"
 			"Cache-Control: no-cache, no-store\r\n"
-			"Expires: 0");
+			"Expires: 0" );
 		mg_printf(nc, "%s", bufRes);
 		nc->flags |= MG_F_SEND_AND_CLOSE;
 

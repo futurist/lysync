@@ -169,6 +169,7 @@ function loopBack() {
            item.data.action=='update' && 
            item.data.type=='file' &&
            item.data.error==null  ){
+          //nircmd qboxcom "sdoifj" "111" shexec "open" "c:\abc.log"
           var file = item.data.item
           var fullPath = path.join(filesFolder, file)
           var fileObj = path.parse(file)
@@ -223,14 +224,13 @@ var printerInterval = setInterval(checkAndPrint, 1000)
 
 function nircmd(cmd, host) {
   host = host || '127.0.0.1'
-  // try c# version
-  request.get('http://'+ host +':12300/?cmd=' + encodeURIComponent(cmd), {timeout:10000}, function(err){
-    if(err) {
-       // try c++ version
-      request.get('http://'+ host +':12310/cmd?' + encodeURIComponent(cmd), {timeout:10000}, function(err){
-        if(err) console.log("nircmd error:",err)
-      })
-    }
+  // try c++ version
+  request.get('http://' + host + ':12310/cmd?' + encodeURIComponent(cmd), {timeout: 10000}, function (err, resp) {
+    if (!err && resp.statusCode == 200 && resp.headers['x-app'] == 'tcpmsg') return
+    // try c# version
+    request.get('http://' + host + ':12300/?cmd=' + encodeURIComponent(cmd), {timeout: 10000}, function (err, resp) {
+      if (err) return console.log('nircmd error', cmd)
+    })
   })
 }
 
