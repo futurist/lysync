@@ -20,19 +20,6 @@ var wmi = new WmiClient({
   host: '127.0.0.1'
 })
 
-var xlsBase = path.join(filesFolder, "拉货计划")
-var sheetGetLastText = require('./xls.js')
-var xlsTexts = {}
-fs.readdir(xlsBase, function (err, files) {
-  if(err) return
-  files.filter(function(v) {
-    if(v.indexOf('拉货计划.xls')>-1) {
-      var file = path.join(xlsBase, v)
-      xlsTexts[file] = sheetGetLastText(file)
-    }
-  })
-})
-
 // for pint in queue
 var printQueue = []
 var prefixSelf = 'printjob_'+CLIENT+'_'
@@ -53,6 +40,21 @@ var syncthingFolder = path.resolve(__dirname, '..')
 var syncthingConfig = syncthingFolder + '/config/config.xml'
 var SyncChild = null
 var SyncConfig = {}
+
+
+var xlsBase = path.join(filesFolder, "拉货计划")
+var sheetGetLastText = require('./xls.js')
+var xlsTexts = {}
+fs.readdir(xlsBase, function (err, files) {
+  if(err) return
+  files.filter(function(v) {
+    if(v.indexOf('拉货计划.xls')>-1) {
+      var file = path.join(xlsBase, v)
+      xlsTexts[file] = sheetGetLastText(file)
+    }
+  })
+})
+
 
 mkdirp.sync(backupFolder)
 mkdirp.sync(jobFolder)
@@ -183,7 +185,6 @@ function loopBack() {
            item.data.action=='update' &&
            item.data.type=='file' &&
            item.data.error==null  ){
-          //nircmd qboxcom "sdoifj" "111" shexec "open" "c:\abc.log"
           var file = item.data.item
           var fullPath = path.join(filesFolder, file)
           var fileObj = path.parse(file)
@@ -205,7 +206,7 @@ function loopBack() {
             var text = sheetGetLastText(fullPath)
             if(xlsTexts[fullPath] && xlsTexts[fullPath] !== text) {
               xlsTexts[fullPath] = text
-              ;['PC33'].forEach(function(host) {
+              ;['pc05', 'pc-xf'].forEach(function(host) {
                 nircmd('nircmd qboxcomtop "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', host)
               })
             }
@@ -249,13 +250,9 @@ var printerInterval = setInterval(checkAndPrint, 1000)
 
 function nircmd(cmd, host) {
   host = host || '127.0.0.1'
-  // try c++ version
-  request.get('http://' + host + ':12310/cmd?' + encodeURIComponent(cmd), {timeout: 10000}, function (err, resp) {
-    if (!err && resp.statusCode == 200 && resp.headers['x-app'] == 'tcpmsg') return
-    // try c# version
-    request.get('http://' + host + ':12300/?cmd=' + encodeURIComponent(cmd), {timeout: 10000}, function (err, resp) {
-      if (err) return console.log('nircmd error', cmd)
-    })
+  // try c# version
+  request.get('http://' + host + ':12300/?cmd=' + encodeURIComponent(cmd), {timeout: 10000}, function (err, resp) {
+    if (err) return console.log('nircmd error', cmd, host)
   })
 }
 
