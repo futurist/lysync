@@ -201,8 +201,8 @@ function loopBack() {
               })
             }
           }
-          // check excel change
-          if(fileObj.base.indexOf('拉货计划.xls') > -1) {
+          // check excel change, only notify CK (client==0)
+          if(CLIENT === 0 && fileObj.base.indexOf('拉货计划.xls') > -1) {
             var text = sheetGetLastText(fullPath)
             if(xlsTexts[fullPath] && xlsTexts[fullPath] !== text) {
               xlsTexts[fullPath] = text

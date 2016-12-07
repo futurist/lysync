@@ -1,7 +1,7 @@
 @rem HIDE CMD WINDOW if you don't want to see cmd
 title synck
 @ping /n 2 127.1>nul
-@nircmd.exe win hide title "synck"
+@nircmd.exe cmdwait 5000 win hide title "synck"
 
 
 set DEBUG=*
