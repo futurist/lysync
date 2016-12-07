@@ -1,7 +1,7 @@
 
 var XLSX = require('xlsx')
 
-function sheetGetAllText (file, sheet) {
+function sheetGetLastText (file, sheet) {
   var workbook = XLSX.readFile(file || 'm:\\拉货计划\\2016年拉货计划.xls')
 
   var total = workbook.SheetNames.length
@@ -17,5 +17,5 @@ function sheetGetAllText (file, sheet) {
   return str
 }
 
-module.exports = sheetGetAllText
+module.exports = sheetGetLastText
 

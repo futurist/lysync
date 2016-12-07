@@ -20,8 +20,18 @@ var wmi = new WmiClient({
   host: '127.0.0.1'
 })
 
-var sheetGetAllText = require('./xls.js')
+var xlsBase = path.join(filesFolder, "拉货计划")
+var sheetGetLastText = require('./xls.js')
 var xlsTexts = {}
+fs.readdir(xlsBase, function (err, files) {
+  if(err) return
+  files.filter(function(v) {
+    if(v.indexOf('拉货计划.xls')>-1) {
+      var file = path.join(xlsBase, v)
+      xlsTexts[file] = sheetGetLastText(file)
+    }
+  })
+})
 
 // for pint in queue
 var printQueue = []
@@ -177,7 +187,8 @@ function loopBack() {
           var file = item.data.item
           var fullPath = path.join(filesFolder, file)
           var fileObj = path.parse(file)
-          if(fileObj.base.match(/^printjob_/)) {
+          // it's printed PDF file from remote, .sta==print status file
+          if(fileObj.base.indexOf('printjob_') == 0 && fileObj.base.indexOf(prefixSelf) < 0) {
             if(fileObj.ext=='.pdf') {
               printQueue.push(fullPath)
             }
@@ -188,14 +199,15 @@ function loopBack() {
                 setTimeout(function () { fs.unlink(fullPath, function () {}) }, 1000)
               })
             }
-            if(fileObj.base.indexOf('拉货计划.xls') > -1) {
-              var text = sheetGetAllText(fullPath)
-              if(xlsTexts[fullPath] !== text) {
-                xlsTexts[fullPath] = text
-                ;['PC33'].forEach(function(host) {
-                  nircmd('nircmd qboxcomtop "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', host)
-                })
-              }
+          }
+          // check excel change
+          if(fileObj.base.indexOf('拉货计划.xls') > -1) {
+            var text = sheetGetLastText(fullPath)
+            if(xlsTexts[fullPath] && xlsTexts[fullPath] !== text) {
+              xlsTexts[fullPath] = text
+              ;['PC33'].forEach(function(host) {
+                nircmd('nircmd qboxcomtop "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', host)
+              })
             }
           }
         }
