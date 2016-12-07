@@ -20,6 +20,13 @@ var wmi = new WmiClient({
   host: '127.0.0.1'
 })
 
+// helper functions
+
+function showlog (msg) {
+  var args = [].slice.call(arguments)
+  console.log.apply(console, [new Date().toISOString() + '\t'].concat(args) )
+}
+
 // for pint in queue
 var printQueue = []
 var prefixSelf = 'printjob_'+CLIENT+'_'
@@ -27,7 +34,7 @@ var prefixSelf = 'printjob_'+CLIENT+'_'
 var APIKEY = ''
 var CONFIG = require('./config.json')
 var CLIENT = CONFIG.client||0
-console.log('client: ', CLIENT)
+showlog('client: ', CLIENT)
 var filesFolder = CONFIG.filesFolder || ['E:\\公司共享资料_误删', 'D:\\传仓库资料_勿删'][CLIENT]
 var jobFolder = filesFolder+'\\打印任务'
 var jobLogFile = jobFolder+'\\PrintLog'+CLIENT+'.txt'
@@ -80,11 +87,11 @@ function reloadConfig(){
     fs.readFile( syncthingConfig, function(err, data) {
         var parser = new xml2js.Parser()
         parser.parseString(data, function (err, result) {
-            if(err) return console.log( 'error parsing syncthing config.xml' )
+            if(err) return showlog( 'error parsing syncthing config.xml' )
             SyncConfig = result
             // console.dir( JSON.stringify(result) );
             APIKEY = result.configuration.gui[0].apikey[0]
-            console.log(APIKEY)
+            showlog(APIKEY)
             var app = result.configuration.folder.find(function(v){ return v.$.id=='app' })
             if(app){
               var xml = fs.readFileSync(syncthingConfig, 'utf8')
@@ -96,7 +103,7 @@ function reloadConfig(){
               // var xml = builder.buildObject(result)
               // fs.writeFileSync(syncthingFolder+'/abc.xml', xml)
             }
-            if(!SyncChild) SyncChild = exec('syncthing.exe -home=config -no-browser', {cwd:syncthingFolder}, function(err){ console.log(err) })
+            if(!SyncChild) SyncChild = exec('syncthing.exe -home=config -no-browser', {cwd:syncthingFolder}, function(err){ showlog(err) })
         })
     })
 }
@@ -105,14 +112,14 @@ function closeSyncThing(cb){
   request({ method: 'POST', uri: 'http://127.0.0.1:8384/rest/system/shutdown',  headers:{ 'X-API-Key': APIKEY } }, cb)
 }
 
-var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ console.log(err) })
+var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ showlog(err) })
 var PrintLogCmd = path.join(__dirname, 'PrintLog.exe') + ' "'+jobFolder+'" ' + CLIENT
-// var PrintLog = exec(PrintLogCmd, {cwd:__dirname}, function(err){ console.log(err) })
-console.log(PrintLogCmd)
+// var PrintLog = exec(PrintLogCmd, {cwd:__dirname}, function(err){ showlog(err) })
+showlog(PrintLogCmd)
 
 function log_old(str) {
   if(!CONFIG.debug) return
-  console.log(moment().format('[YYYY-MM-DD HH:mm:ss]'), str)
+  showlog(moment().format('[YYYY-MM-DD HH:mm:ss]'), str)
 }
 var log = debug('app:lysync')
 
@@ -227,7 +234,7 @@ function checkAndPrint () {
   wmi.query('SELECT * FROM Win32_Printer WHERE DeviceID = "' + printer + '"', function (err, result) {
     if (err || !result || !result.length) {
       // printer not exists
-      return console.log('printer not found', printerName)
+      return showlog('printer not found', printerName)
     }
     var p = result[0]
     var printerID = p.DeviceID
@@ -235,13 +242,13 @@ function checkAndPrint () {
       // printer exists, and it's ready: GO PRINT
       //  2='Unknown', 3='Idle', 4='Printing', 5='Warmup'
       printQueue.forEach(function (v) {
-        console.log('printing', printerID)
+        showlog('printing', printerID)
         printPDF(v, printerID)
       })
       printQueue = []
     } else {
       // printer exists, but ait's not ready
-      console.log('printer offline', printerID)
+      showlog('printer offline', printerID)
     }
   })
 }
@@ -252,14 +259,14 @@ function nircmd(cmd, host) {
   host = host || '127.0.0.1'
   // try c# version
   request.get('http://' + host + ':12300/?cmd=' + encodeURIComponent(cmd), {timeout: 10000}, function (err, resp) {
-    if (err) return console.log('nircmd error', cmd, host)
+    if (err) return showlog('nircmd error', cmd, host)
   })
 }
 
 function printPDF(file, printerID) {
   var cmd = util.format( CONFIG.printCommand || '"%s" -silent -print-to "%s" -print-settings "fit" "%s"', PDFReaderPath, printerID, file )
   log(cmd)
-  // exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ console.log(e) })
+  // exec( path.join(__dirname, 'sound.vbs'), {cwd:__dirname}, function(e){ showlog(e) })
   // return
   var child = exec(cmd, function printFunc(err, stdout, stderr) {
     log('print result',child.pid, err, stdout, stderr)
@@ -284,7 +291,7 @@ function printPDF(file, printerID) {
       // })
       log('rename file', file,path.join(backupFolder, path.basename(file)))
       // below not work when d: to e: : Error: EXDEV: cross-device link not permitted, rename, use pipe above
-		  // fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) console.log(e) })
+		  // fs.rename(file, path.join(backupFolder, path.basename(file)), function(e){ if(e) showlog(e) })
     }, 1000)
   })
 }
@@ -345,7 +352,7 @@ function clearAllErrors(){
   // POST /rest/system/error/clear
   request(
     {method: 'POST', uri: 'http://127.0.0.1:8384/rest/system/error/clear',  headers:{ 'X-API-Key': APIKEY }}, 
-    function(err, res, body){ console.log('clearAllErrors', body) }
+    function(err, res, body){ showlog('clearAllErrors', body) }
   )
 }
 
