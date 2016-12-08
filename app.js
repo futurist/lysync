@@ -11,7 +11,7 @@ var debug = require('debug')
 var request = require('request')
 var xml2js = require('xml2js')
 
-var net=require("net")
+var net=require('net')
 var mkdirp=require("mkdirp")
 
 var WmiClient = require('wmi-client')
@@ -48,17 +48,19 @@ var syncthingConfig = syncthingFolder + '/config/config.xml'
 var SyncChild = null
 var SyncConfig = {}
 
-
-var xlsBase = path.join(filesFolder, "拉货计划")
-var sheetGetLastText = require('./xls.js')
+var xlsCheckDir = ["拉货计划", "仓库报关数据"]
+var sheetGetText = require('./xls.js')
 var xlsTexts = {}
-fs.readdir(xlsBase, function (err, files) {
-  if(err) return
-  files.filter(function(v) {
-    if(v.indexOf('拉货计划.xls')>-1) {
+xlsCheckDir.map(function(dir) {
+  var xlsBase = path.join(filesFolder, dir)
+  fs.readdir(xlsBase, function (err, files) {
+    if(err) return
+    files.map(function(v) {
       var file = path.join(xlsBase, v)
-      xlsTexts[file] = sheetGetLastText(file)
-    }
+      var text = sheetGetText(file, -1)
+      if(typeof text=='string' && text.trim()) xlsTexts[file] = text
+      else xlsTexts[file] = sheetGetText(file, 0)
+    })
   })
 })
 
@@ -181,9 +183,15 @@ function loopBack() {
 
         // local print
         if(item.type=='LocalIndexUpdated' && item.data.items){
-          item.data.filenames.forEach(function(v, i){
+          item.data.filenames.forEach(function(file, i){
             // if(v.match(/\.pdf$/)) printLog(v, 'LocalIndexUpdated')
             // else if(v.match(/\.sta$/)){}
+
+          var fullPath = path.join(filesFolder, file)
+          var fileObj = path.parse(file)
+
+
+
           })
         }
 
@@ -208,9 +216,11 @@ function loopBack() {
               })
             }
           }
+
+
           // check excel change, only notify CK (client==0)
           if(CLIENT === 0 && fileObj.base.indexOf('拉货计划.xls') > -1) {
-            var text = sheetGetLastText(fullPath)
+            var text = sheetGetText(fullPath, -1)
             if(xlsTexts[fullPath] && xlsTexts[fullPath] !== text) {
               xlsTexts[fullPath] = text
               ;['pc05', 'pc-xf'].forEach(function(host) {
@@ -218,6 +228,30 @@ function loopBack() {
               })
             }
           }
+
+
+          // check excel change, only notify office (client=1)
+          if(CLIENT === 1 && fileObj.base.indexOf('报关数据.xls') > -1) {
+
+            var text = sheetGetText(fullPath, 0)
+            if(xlsTexts[fullPath] && xlsTexts[fullPath] !== text) {
+              xlsTexts[fullPath] = text
+              var tempName = 'c:\\windows\\temp\\' + moment().format('MM-DD日HH时mm分ss秒 ') + path.basename(file)
+              ;[
+                'pcwp', // TQQ
+                'pcwzy', // WZY
+                'pcwjx', // WDF
+                'PC-201407261004', // chensheng
+                'pcjcf', // feizi
+                'huadan', // huadan
+              ].forEach(function(host) {
+                nircmd('nircmd execmd copy /y "'+ path.join('M:', file) +'" "'+ tempName +'"', host)
+                nircmd('nircmd qboxcomtop "报关数据有更新，是否打开?" "报关数据有更新" shexec "open" "'+ tempName +'"', host)
+              })
+            }
+          }
+
+
         }
       }
     }
