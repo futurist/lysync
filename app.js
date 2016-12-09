@@ -223,7 +223,11 @@ function loopBack() {
             var text = sheetGetText(fullPath, -1)
             if(xlsTexts[fullPath] && xlsTexts[fullPath] !== text) {
               xlsTexts[fullPath] = text
-              ;['pc05', 'pc-xf'].forEach(function(host) {
+              ;[
+                'pc05',
+                'pc-xf',
+                'PC-20130823LMXU',
+              ].forEach(function(host) {
                 nircmd('nircmd qboxcomtop "拉货计划有更新，是否打开?" "拉货计划有更新" shexec "open" "'+ path.join('M:', file) +'"', host)
               })
             }
@@ -244,9 +248,11 @@ function loopBack() {
                 'PC-201407261004', // chensheng
                 'pcjcf', // feizi
                 'huadan', // huadan
+                'pc-zh', // zh
+                'pcwd', // WD
               ].forEach(function(host) {
                 nircmd('nircmd execmd copy /y "'+ path.join('M:', file) +'" "'+ tempName +'"', host)
-                nircmd('nircmd qboxcomtop "报关数据有更新，是否打开?" "报关数据有更新" shexec "open" "'+ tempName +'"', host)
+                nircmd('nircmd qboxcomtop "报关数据有更新，是否打开副本(更改不会上传)?" "报关数据有更新" shexec "open" "'+ tempName +'"', host)
               })
             }
           }
