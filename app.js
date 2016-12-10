@@ -56,8 +56,11 @@ xlsCheckDir.map(function(dir) {
   fs.readdir(xlsBase, function (err, files) {
     if(err) return
     files.map(function(v) {
+      if(!/\.xlsx?$/.test(path.extname(v))) return
       var file = path.join(xlsBase, v)
-      var text = sheetGetText(file, -1)
+      try {
+        var text = sheetGetText(file, -1)
+      } catch(e) {return}
       if(typeof text=='string' && text.trim()) xlsTexts[file] = text
       else xlsTexts[file] = sheetGetText(file, 0)
     })
@@ -114,7 +117,7 @@ function closeSyncThing(cb){
   request({ method: 'POST', uri: 'http://127.0.0.1:8384/rest/system/shutdown',  headers:{ 'X-API-Key': APIKEY } }, cb)
 }
 
-var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ showlog(err) })
+// var PrintTcp = exec(path.join(__dirname, 'PrintTcp.exe'), {cwd:__dirname}, function(err){ showlog(err) })
 var PrintLogCmd = path.join(__dirname, 'PrintLog.exe') + ' "'+jobFolder+'" ' + CLIENT
 // var PrintLog = exec(PrintLogCmd, {cwd:__dirname}, function(err){ showlog(err) })
 showlog(PrintLogCmd)
