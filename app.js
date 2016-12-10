@@ -245,6 +245,7 @@ function loopBack() {
               xlsTexts[fullPath] = text
               var tempName = 'c:\\windows\\temp\\' + moment().format('MM-DD日HH时mm分ss秒 ') + path.basename(file)
               ;[
+                'PC-201008081700', // TDY
                 'pcwp', // TQQ
                 'pcwzy', // WZY
                 'pcwjx', // WDF
