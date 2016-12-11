@@ -4,7 +4,9 @@
 
 @title synck
 
-@nircmd execmd "nircmd.exe cmdwait 10000 win hide title synck"
+@nircmd execmd "nircmd.exe cmdwait 6000 win hide title synck"
+@nircmd execmd "nircmd.exe cmdwait 9000 win show title synck"
+@nircmd execmd "nircmd.exe cmdwait 12000 win hide title synck"
 
 
 set DEBUG=*
