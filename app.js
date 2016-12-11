@@ -239,11 +239,11 @@ function loopBack() {
 
           // check excel change, only notify office (client=1)
           if(CLIENT === 1 && fileObj.base.indexOf('报关数据.xls') > -1) {
-
+            var baoguanFolder = "D:\\仓库报关数据"
             var text = sheetGetText(fullPath, 0)
             if(xlsTexts[fullPath] && xlsTexts[fullPath] !== text) {
               xlsTexts[fullPath] = text
-              var tempName = 'c:\\windows\\temp\\' + moment().format('MM-DD日HH时mm分ss秒 ') + path.basename(file)
+              var tempName = path.join(baoguanFolder, moment().format('MM-DD日HH时mm分ss秒 ') + path.basename(file))
               ;[
                 'PC-201008081700', // TDY
                 'pcwp', // TQQ
@@ -255,8 +255,9 @@ function loopBack() {
                 'pc-zh', // zh
                 'pcwd', // WD
               ].forEach(function(host) {
-                nircmd('nircmd execmd copy /y "'+ path.join('M:', file) +'" "'+ tempName +'"', host)
-                nircmd('nircmd qboxcomtop "报关数据有更新，是否打开副本(更改不会上传)?" "报关数据有更新" shexec "open" "'+ tempName +'"', host)
+                nircmd('nircmd execmd mkdir "' + baoguanFolder + '"', host)
+                nircmd('nircmd cmdwait 1000 execmd copy /y "' + path.join('M:', file) + '" "' + tempName + '"', host)
+                nircmd('nircmd cmdwait 5000 qboxcomtop "报关数据有更新，是否打开副本(更改不会上传)?" "报关数据有更新" shexec "open" "'+ tempName +'"', host)
               })
             }
           }
