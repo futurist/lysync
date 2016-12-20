@@ -258,6 +258,7 @@ function loopBack() {
                 'huadan', // huadan
                 'pc-zh', // zh
                 'pcwd', // WD
+                'PC201309081424', // WD
               ].forEach(function(host) {
                 nircmd('nircmd execmd mkdir "' + tempFolder + '"', host)
                 nircmd('nircmd cmdwait 1000 execmd copy /y "' + path.join('M:', file) + '" "' + tempName + '"', host)
